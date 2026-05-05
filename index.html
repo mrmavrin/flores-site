@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Цветочная витрина</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream:    #FDF8F3;
+    --rose:     #C8896A;
+    --rose-dk:  #9D6347;
+    --rose-lt:  #F2E4DA;
+    --green:    #7A9E7E;
+    --text:     #2C1810;
+    --muted:    #9C7B6E;
+    --card:     #FFFFFF;
+    --border:   #EDE0D8;
+    --shadow:   0 2px 16px rgba(44,24,16,0.08);
+    --radius:   18px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--cream);
+    padding: 14px 18px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .shop-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .shop-title span { color: var(--rose); }
+  .header-icon {
+    width: 38px; height: 38px;
+    background: var(--rose-lt);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .tab.active {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: #fff;
+  }
+
+  /* ── CATALOG GRID ── */
+  .catalog {
+    padding: 16px 12px 100px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── BOUQUET CARD ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform .18s, box-shadow .18s;
+    position: relative;
+  }
+  .card:active { transform: scale(0.97); }
+  .card.dimmed { opacity: 0.5; }
+
+  .card-img {
+    width: 100%;
+    aspect-ratio: 3/4;
+    object-fit: cover;
+    display: block;
+    background: var(--rose-lt);
+  }
+  .card-img-placeholder {
+    width: 100%;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+  }
+  .card-body {
+    padding: 10px 12px 12px;
+  }
+  .card-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+  }
+  .status-available { background: #E8F5E9; color: #2E7D32; }
+  .status-order     { background: #FFF3E0; color: #E65100; }
+  .status-hidden    { background: #F5F5F5; color: #9E9E9E; }
+
+  .card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .card-price {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--rose-dk);
+  }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+    color: var(--muted);
+  }
+  .petal-spin {
+    font-size: 42px;
+    animation: spin 1.6s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── BOTTOM SHEET ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(44,24,16,0.45);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+
+  .sheet {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--cream);
+    border-radius: 24px 24px 0 0;
+    z-index: 210;
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.32,1.2,.56,1);
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .sheet.open { transform: translateY(0); }
+
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 12px auto 0;
+    flex-shrink: 0;
+  }
+  .sheet-scroll {
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px;
+  }
+
+  /* ── CAROUSEL ── */
+  .carousel {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0;
+    margin: 16px 16px 0;
+    border-radius: 16px;
+    aspect-ratio: 4/3;
+    background: var(--rose-lt);
+  }
+  .carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform .3s ease;
+  }
+  .carousel-slide {
+    min-width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 80px;
+  }
+  .carousel-slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .carousel-dots {
+    position: absolute;
+    bottom: 10px; left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.5);
+    transition: all .2s;
+  }
+  .dot.active {
+    width: 18px;
+    background: #fff;
+  }
+  .carousel-btn {
+    position: absolute;
+    top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.85);
+    border: none;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .carousel-btn.prev { left: 10px; }
+  .carousel-btn.next { right: 10px; }
+
+  /* ── SHEET CONTENT ── */
+  .sheet-content { padding: 20px 18px 0; }
+
+  .sheet-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+  .sheet-desc {
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .flowers-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-bottom: 8px;
+  }
+  .flower-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .flower-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    background: var(--rose-lt);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--rose-dk);
+  }
+
+  .sheet-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+  .meta-status { display: flex; flex-direction: column; gap: 3px; }
+  .meta-label { font-size: 12px; color: var(--muted); }
+  .meta-value { font-size: 14px; font-weight: 500; }
+
+  .sheet-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .price-rub { font-size: 28px; }
+
+  /* ── BUY BUTTON ── */
+  .buy-wrap {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px 18px 28px;
+    background: linear-gradient(to top, var(--cream) 60%, transparent);
+    z-index: 220;
+  }
+  .buy-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--rose);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+    letter-spacing: .2px;
+  }
+  .buy-btn:active { transform: scale(0.98); background: var(--rose-dk); }
+  .buy-btn:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+  }
+
+  /* ── EMPTY ── */
+  .empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="shop-title">🌸 Цветочная<span> витрина</span></div>
+    <div class="header-icon">💐</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-filter="all">Все букеты</button>
+    <button class="tab" data-filter="available">✅ В наличии</button>
+    <button class="tab" data-filter="order">🕐 На заказ</button>
+  </div>
+</div>
+
+<div class="catalog" id="catalog">
+  <div class="loading" style="grid-column:1/-1">
+    <div class="petal-spin">🌸</div>
+    <div>Загружаем букеты…</div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+<!-- BOTTOM SHEET -->
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-scroll" id="sheetScroll">
+    <!-- Карусель -->
+    <div class="carousel" id="carousel">
+      <div class="carousel-track" id="carouselTrack"></div>
+      <div class="carousel-dots" id="carouselDots"></div>
+      <button class="carousel-btn prev" onclick="slideCarousel(-1)">‹</button>
+      <button class="carousel-btn next" onclick="slideCarousel(1)">›</button>
+    </div>
+
+    <div class="sheet-content">
+      <div class="sheet-name" id="sheetName"></div>
+      <div class="sheet-desc" id="sheetDesc"></div>
+      <div class="flowers-label">Состав букета</div>
+      <div class="flower-tags" id="sheetFlowers"></div>
+      <div class="sheet-meta">
+        <div class="meta-status">
+          <div class="meta-label">Статус</div>
+          <div class="meta-value" id="sheetStatus"></div>
+        </div>
+        <div class="meta-status" style="text-align:right">
+          <div class="meta-label">Время изготовления</div>
+          <div class="meta-value" id="sheetTime"></div>
+        </div>
+      </div>
+      <div class="sheet-price" id="sheetPrice"></div>
+    </div>
+  </div>
+
+  <div class="buy-wrap" id="buyWrap" style="display:none">
+    <button class="buy-btn" id="buyBtn" onclick="handleBuy()"></button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const SHEET_ID = '1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc';
+
+// Telegram WebApp init
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
+// ── GRADIENT PLACEHOLDERS (пока нет фото) ─────────────
+const GRADIENTS = [
+  ['#F9CDD2','#F48FB1','🌹'],
+  ['#FDDEC0','#FFAB76','🌸'],
+  ['#D4EDDA','#81C784','💐'],
+  ['#FFF9C4','#FFD54F','🌼'],
+  ['#E1BEE7','#CE93D8','🌷'],
+  ['#B2EBF2','#80DEEA','🌿'],
+];
+
+function getGradient(i) { return GRADIENTS[i % GRADIENTS.length]; }
+
+// ── GOOGLE SHEETS FETCH ──────────────────────────────
+async function fetchSheet(name) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`;
+  const res  = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  const cols = json.table.cols.map(c => c.label);
+  return json.table.rows.map(row => {
+    const obj = {};
+    row.c.forEach((cell, i) => { obj[cols[i]] = cell ? cell.v : null; });
+    return obj;
+  });
+}
+
+// ── STATE ─────────────────────────────────────────────
+let bouquets    = [];
+let composition = [];
+let flowers     = [];
+let media       = [];
+let currentFilter = 'all';
+let currentBouquet = null;
+let carouselIndex  = 0;
+let carouselSlides = [];
+
+// ── LOAD DATA ─────────────────────────────────────────
+async function loadData() {
+  try {
+    [bouquets, composition, flowers, media] = await Promise.all([
+      fetchSheet('Букеты'),
+      fetchSheet('Состав'),
+      fetchSheet('Цветы'),
+      fetchSheet('Медиа'),
+    ]);
+    renderCatalog();
+  } catch (e) {
+    document.getElementById('catalog').innerHTML =
+      `<div class="loading" style="grid-column:1/-1">
+        <div style="font-size:40px">😔</div>
+        <div>Не удалось загрузить данные</div>
+        <div style="font-size:12px;margin-top:4px">${e.message}</div>
+       </div>`;
+  }
+}
+
+// ── STATUS HELPERS ────────────────────────────────────
+function getStatus(b) {
+  if (!b.admin_visible) return 'hidden';
+  if (b.stock_qty > 0)  return 'available';
+  return 'order';
+}
+
+function statusLabel(s) {
+  if (s === 'available') return '✅ В наличии';
+  if (s === 'order')     return '🕐 На заказ';
+  return '❌ Недоступен';
+}
+
+function statusClass(s) {
+  if (s === 'available') return 'status-available';
+  if (s === 'order')     return 'status-order';
+  return 'status-hidden';
+}
+
+// ── SORT ─────────────────────────────────────────────
+function sortOrder(s) {
+  if (s === 'available') return 0;
+  if (s === 'order')     return 1;
+  return 2;
+}
+
+// ── RENDER CATALOG ────────────────────────────────────
+function renderCatalog() {
+  const cat = document.getElementById('catalog');
+
+  let list = bouquets.map((b, i) => ({ ...b, _i: i, _status: getStatus(b) }));
+
+  if (currentFilter === 'available') list = list.filter(b => b._status === 'available');
+  if (currentFilter === 'order')     list = list.filter(b => b._status === 'order');
+
+  list.sort((a, b) => sortOrder(a._status) - sortOrder(b._status));
+
+  if (!list.length) {
+    cat.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div><div>Букеты не найдены</div></div>`;
+    return;
+  }
+
+  cat.innerHTML = list.map(b => cardHTML(b)).join('');
+}
+
+function cardHTML(b) {
+  const s   = b._status;
+  const gr  = getGradient(b._i);
+  const dimmed = s === 'hidden' ? 'dimmed' : '';
+
+  return `
+  <div class="card ${dimmed}" onclick="openSheet('${b.id}')">
+    <div class="card-img-placeholder" style="background:linear-gradient(135deg,${gr[0]},${gr[1]})">${gr[2]}</div>
+    <div class="card-body">
+      <div class="card-status ${statusClass(s)}">${statusLabel(s)}</div>
+      <div class="card-name">${b.name}</div>
+      <div class="card-price">${Number(b.price).toLocaleString('ru-RU')} ₽</div>
+    </div>
+  </div>`;
+}
+
+// ── FILTERS ───────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentFilter = tab.dataset.filter;
+    renderCatalog();
+  });
+});
+
+// ── OPEN SHEET ────────────────────────────────────────
+function openSheet(id) {
+  const b = bouquets.find(x => x.id === id);
+  if (!b) return;
+  currentBouquet = b;
+
+  const s  = getStatus(b);
+  const gr = getGradient(bouquets.indexOf(b));
+
+  // Медиа слайды
+  const bMedia = media.filter(m => m.bouquet_id === id);
+  carouselSlides = bMedia.length
+    ? bMedia
+    : [{ type: 'placeholder', emoji: gr[2], color1: gr[0], color2: gr[1] },
+       { type: 'placeholder', emoji: gr[2], color1: gr[1], color2: gr[0] },
+       { type: 'placeholder', emoji: gr[2], color1: gr[0], color2: gr[1] }];
+
+  carouselIndex = 0;
+  renderCarousel();
+
+  // Инфо
+  document.getElementById('sheetName').textContent  = b.name;
+  document.getElementById('sheetDesc').textContent  = b.description || '';
+
+  // Состав
+  const comp = composition.filter(c => c.bouquet_id === id);
+  const tags = comp.map(c => {
+    const f = flowers.find(fl => fl.id === c.flower_id);
+    return f ? `<span class="flower-tag">${f.emoji} ${f.name} × ${c.quantity}</span>` : '';
+  }).join('');
+  document.getElementById('sheetFlowers').innerHTML = tags || '<span class="flower-tag">🌸 Состав уточняйте</span>';
+
+  // Статус и время
+  document.getElementById('sheetStatus').textContent =
+    s === 'available' ? `✅ В наличии · ${b.stock_qty} шт.` :
+    s === 'order'     ? '🕐 На заказ' : '❌ Недоступен';
+
+  document.getElementById('sheetTime').textContent =
+    b.make_time_hours > 0 ? `от ${b.make_time_hours} ч.` : 'Готов сейчас';
+
+  document.getElementById('sheetPrice').innerHTML =
+    `${Number(b.price).toLocaleString('ru-RU')} <span class="price-rub">₽</span>`;
+
+  // Кнопка
+  const buyWrap = document.getElementById('buyWrap');
+  const buyBtn  = document.getElementById('buyBtn');
+  buyWrap.style.display = 'block';
+  if (s === 'available') {
+    buyBtn.textContent = 'Купить';
+    buyBtn.disabled = false;
+  } else if (s === 'order') {
+    buyBtn.textContent = 'Заказать';
+    buyBtn.disabled = false;
+  } else {
+    buyBtn.textContent = 'Недоступен';
+    buyBtn.disabled = true;
+  }
+
+  document.getElementById('sheetScroll').scrollTop = 0;
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('sheet').classList.add('open');
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('buyWrap').style.display = 'none';
+  currentBouquet = null;
+}
+
+// ── CAROUSEL ──────────────────────────────────────────
+function renderCarousel() {
+  const track = document.getElementById('carouselTrack');
+  const dots  = document.getElementById('carouselDots');
+
+  track.innerHTML = carouselSlides.map(slide => {
+    if (slide.type === 'placeholder') {
+      return `<div class="carousel-slide" style="background:linear-gradient(135deg,${slide.color1},${slide.color2})">${slide.emoji}</div>`;
+    }
+    if (slide.type === 'video') {
+      return `<div class="carousel-slide" style="background:#111">
+        <video src="${slide.url}" autoplay muted loop playsinline style="max-width:100%;max-height:100%;"></video>
+      </div>`;
+    }
+    return `<div class="carousel-slide">
+      <img src="${slide.url}" alt="" onerror="this.parentElement.innerHTML='🌸'">
+    </div>`;
+  }).join('');
+
+  dots.innerHTML = carouselSlides.map((_, i) =>
+    `<div class="dot ${i === 0 ? 'active' : ''}"></div>`
+  ).join('');
+
+  updateCarousel();
+}
+
+function slideCarousel(dir) {
+  carouselIndex = (carouselIndex + dir + carouselSlides.length) % carouselSlides.length;
+  updateCarousel();
+}
+
+function updateCarousel() {
+  document.getElementById('carouselTrack').style.transform = `translateX(-${carouselIndex * 100}%)`;
+  document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === carouselIndex));
+}
+
+// Свайп карусели
+let touchStartX = 0;
+document.getElementById('carousel').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+document.getElementById('carousel').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) slideCarousel(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+// Свайп вниз для закрытия шторки
+let sheetTouchY = 0;
+const sheet = document.getElementById('sheet');
+sheet.addEventListener('touchstart', e => { sheetTouchY = e.touches[0].clientY; }, { passive: true });
+sheet.addEventListener('touchend', e => {
+  const dy = e.changedTouches[0].clientY - sheetTouchY;
+  const scroll = document.getElementById('sheetScroll').scrollTop;
+  if (dy > 80 && scroll <= 0) closeSheet();
+}, { passive: true });
+
+// ── BUY ───────────────────────────────────────────────
+function handleBuy() {
+  if (!currentBouquet) return;
+  const s = getStatus(currentBouquet);
+
+  // Заглушка — потом ЮKassa
+  if (tg) {
+    tg.showPopup({
+      title: s === 'available' ? '💳 Оплата' : '📋 Заказ',
+      message: `${currentBouquet.name}\n${Number(currentBouquet.price).toLocaleString('ru-RU')} ₽\n\n⚙️ Оплата в разработке`,
+      buttons: [{ type: 'ok', text: 'Понятно' }]
+    });
+  } else {
+    alert(`${currentBouquet.name} — ${currentBouquet.price} ₽\n⚙️ Оплата в разработке`);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>

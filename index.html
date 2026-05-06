@@ -804,7 +804,6 @@
       }
 
       .sheet {
-        --sheet-media-progress: 0;
         position: fixed;
         left: 0;
         right: 0;
@@ -850,24 +849,12 @@
       .sheet-media {
         border-radius: 0;
         overflow: hidden;
-        width: calc(100% - (100% - 112px) * var(--sheet-media-progress));
-        margin: 0 auto;
+        width: 100%;
         aspect-ratio: 1 / 1;
-        flex-shrink: 0;
         background: #f2ebe4;
         position: relative;
         transform: translateZ(0);
         backface-visibility: hidden;
-        border-radius: calc(18px * var(--sheet-media-progress));
-        transition:
-          width 0.18s ease,
-          border-radius 0.18s ease;
-      }
-
-      .sheet.media-compact .sheet-carousel-btn,
-      .sheet.media-compact .sheet-dots {
-        opacity: 0;
-        pointer-events: none;
       }
 
       .sheet-media.media-image {
@@ -1625,42 +1612,46 @@
 
     <section class="sheet" id="sheet">
       <div class="sheet-handle"></div>
-      <div class="sheet-media" id="sheetMedia">
-        <div class="sheet-track" id="sheetTrack"></div>
-        <button
-          class="sheet-carousel-btn prev"
-          id="sheetPrevBtn"
-          type="button"
-          onclick="slideSheet(-1)"
-          aria-label="Предыдущий слайд"
-        >
-          ‹
-        </button>
-        <button
-          class="sheet-carousel-btn next"
-          id="sheetNextBtn"
-          type="button"
-          onclick="slideSheet(1)"
-          aria-label="Следующий слайд"
-        >
-          ›
-        </button>
-        <div class="sheet-top-controls">
-          <button class="sheet-round-btn" type="button" onclick="closeSheet()">
-            ←
+      <div class="sheet-scroll" id="sheetScroll">
+        <div class="sheet-media" id="sheetMedia">
+          <div class="sheet-track" id="sheetTrack"></div>
+          <button
+            class="sheet-carousel-btn prev"
+            id="sheetPrevBtn"
+            type="button"
+            onclick="slideSheet(-1)"
+            aria-label="Предыдущий слайд"
+          >
+            ‹
           </button>
           <button
-            class="sheet-round-btn"
+            class="sheet-carousel-btn next"
+            id="sheetNextBtn"
             type="button"
-            id="sheetFavBtn"
-            onclick="toggleCurrentFavorite()"
+            onclick="slideSheet(1)"
+            aria-label="Следующий слайд"
           >
-            ♡
+            ›
           </button>
+          <div class="sheet-top-controls">
+            <button
+              class="sheet-round-btn"
+              type="button"
+              onclick="closeSheet()"
+            >
+              ←
+            </button>
+            <button
+              class="sheet-round-btn"
+              type="button"
+              id="sheetFavBtn"
+              onclick="toggleCurrentFavorite()"
+            >
+              ♡
+            </button>
+          </div>
+          <div class="sheet-dots" id="sheetDots"></div>
         </div>
-        <div class="sheet-dots" id="sheetDots"></div>
-      </div>
-      <div class="sheet-scroll" id="sheetScroll">
         <div class="sheet-info">
           <h3 class="sheet-name" id="sheetName"></h3>
           <div class="sheet-price" id="sheetPrice"></div>
@@ -2337,9 +2328,7 @@
         document.getElementById("ctaBtn").textContent = "Добавить в корзину";
         document.getElementById("ctaBtn").disabled = false;
 
-        const scroll = document.getElementById("sheetScroll");
-        scroll.scrollTop = 0;
-        updateSheetMediaState();
+        document.getElementById("sheetScroll").scrollTop = 0;
 
         lockPageScroll();
         document.getElementById("overlay").classList.add("open");
@@ -2556,7 +2545,6 @@
         document.getElementById("overlay").classList.remove("open");
         document.getElementById("sheet").classList.remove("open");
         document.getElementById("sheetScroll").scrollTop = 0;
-        updateSheetMediaState();
         unlockPageScroll();
         currentBouquet = null;
       }
@@ -2660,18 +2648,6 @@
       let sheetTouchY = 0;
       let sheetPointerX = 0;
       let sheetPointerDown = false;
-
-      function updateSheetMediaState() {
-        const sheet = document.getElementById("sheet");
-        const top = document.getElementById("sheetScroll").scrollTop;
-        const progress = Math.max(0, Math.min(top / 220, 1));
-        sheet.style.setProperty("--sheet-media-progress", progress.toFixed(3));
-        sheet.classList.toggle("media-compact", progress > 0.88);
-      }
-
-      document
-        .getElementById("sheetScroll")
-        .addEventListener("scroll", updateSheetMediaState, { passive: true });
 
       document.getElementById("sheetMedia").addEventListener(
         "touchstart",

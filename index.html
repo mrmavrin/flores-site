@@ -850,13 +850,13 @@
       }
 
       .slide {
-        min-width: 100%;
+        flex: 0 0 100%;
+        width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 84px;
-        flex-shrink: 0;
         transform: translateZ(0);
         backface-visibility: hidden;
       }
@@ -2475,8 +2475,11 @@
       }
 
       function updateSlide() {
+        const w =
+          document.getElementById("sheetMedia").offsetWidth ||
+          window.innerWidth;
         document.getElementById("sheetTrack").style.transform =
-          `translate3d(-${slideIndex * 100}%, 0, 0)`;
+          `translate3d(-${slideIndex * w}px, 0, 0)`;
         document
           .querySelectorAll(".dot")
           .forEach((dot, i) =>

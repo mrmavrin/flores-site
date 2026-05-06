@@ -6,11 +6,12 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Цветочная витрина</title>
+    <title>Bloome | Цветочная витрина</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
 
@@ -24,208 +25,518 @@
       }
 
       :root {
-        --cream: #fdf8f3;
-        --rose: #c8896a;
-        --rose-dk: #9d6347;
-        --rose-lt: #f2e4da;
-        --green: #7a9e7e;
-        --text: #2c1810;
-        --muted: #9c7b6e;
-        --card: #ffffff;
-        --border: #ede0d8;
-        --shadow: 0 2px 16px rgba(44, 24, 16, 0.08);
-        --radius: 18px;
+        --milk: #fbf6f1;
+        --cream: #f5eee7;
+        --dust-rose: #d9a894;
+        --peach: #f3c9b5;
+        --soft-green: #8ea284;
+        --sage: #a9b89f;
+        --text: #364037;
+        --muted: #6f7869;
+        --card: #fffdfb;
+        --line: #eadfd5;
+        --shadow-soft: 0 12px 30px rgba(90, 72, 56, 0.1);
+        --shadow-card: 0 8px 22px rgba(90, 72, 56, 0.12);
+        --radius-xl: 26px;
+        --radius-lg: 20px;
+        --radius-md: 16px;
       }
 
       html,
       body {
-        height: 100%;
-        background: var(--cream);
+        min-height: 100%;
+        background:
+          radial-gradient(circle at 10% -10%, #fff7f3 0, var(--milk) 48%),
+          radial-gradient(circle at 90% 18%, #f4eadf 0, transparent 38%),
+          var(--milk);
         color: var(--text);
-        font-family: "DM Sans", sans-serif;
+        font-family: "Manrope", sans-serif;
         font-size: 15px;
         overflow-x: hidden;
         -webkit-tap-highlight-color: transparent;
       }
 
-      /* ── HEADER ── */
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      body::before {
+        width: 320px;
+        height: 320px;
+        top: -110px;
+        right: -80px;
+        border-radius: 50%;
+        border: 1px solid rgba(217, 168, 148, 0.34);
+      }
+
+      body::after {
+        width: 280px;
+        height: 280px;
+        bottom: -120px;
+        left: -70px;
+        border-radius: 50%;
+        border: 1px solid rgba(142, 162, 132, 0.34);
+      }
+
+      .app {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .welcome {
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .welcome-card {
+        width: min(450px, 100%);
+        min-height: 82dvh;
+        background: linear-gradient(165deg, #fdf7f4 0%, #f8f1ea 100%);
+        border-radius: 36px;
+        border: 1px solid rgba(217, 168, 148, 0.24);
+        box-shadow: var(--shadow-soft);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 48px 28px 34px;
+      }
+
+      .welcome-card::before,
+      .welcome-card::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;
+        border: 1px solid rgba(217, 168, 148, 0.3);
+      }
+
+      .welcome-card::before {
+        width: 240px;
+        height: 240px;
+        right: -96px;
+        top: -88px;
+      }
+
+      .welcome-card::after {
+        width: 240px;
+        height: 240px;
+        left: -110px;
+        bottom: -110px;
+      }
+
+      .welcome-flower {
+        position: absolute;
+        font-size: 28px;
+        color: rgba(217, 168, 148, 0.45);
+      }
+
+      .f-1 {
+        top: 84px;
+        left: 42px;
+      }
+
+      .f-2 {
+        bottom: 134px;
+        right: 40px;
+      }
+
+      .f-3 {
+        top: 200px;
+        right: 36px;
+      }
+
+      .welcome-copy {
+        margin-top: 76px;
+        text-align: center;
+      }
+
+      .brand {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(58px, 11vw, 74px);
+        font-weight: 600;
+        line-height: 0.9;
+        letter-spacing: -0.03em;
+        color: #455145;
+      }
+
+      .brand-note {
+        margin-top: 8px;
+        color: var(--dust-rose);
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+
+      .welcome-text {
+        margin-top: 28px;
+        font-size: 23px;
+        font-family: "Cormorant Garamond", serif;
+        line-height: 1.35;
+        color: #4f5a50;
+      }
+
+      .welcome-btn {
+        width: 100%;
+        border: none;
+        border-radius: 999px;
+        padding: 16px 22px;
+        background: linear-gradient(130deg, var(--soft-green), #7e9473);
+        color: #f7f5ef;
+        font-weight: 600;
+        font-size: 16px;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(74, 95, 70, 0.24);
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .welcome-btn:active {
+        transform: scale(0.98);
+        filter: brightness(0.98);
+      }
+
+      .shell {
+        min-height: 100dvh;
+        padding-bottom: 112px;
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.42s ease,
+          transform 0.42s ease;
+      }
+
+      .shell.open {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
       .header {
         position: sticky;
         top: 0;
-        z-index: 100;
-        background: var(--cream);
-        padding: 14px 18px 0;
-        border-bottom: 1px solid var(--border);
+        z-index: 20;
+        backdrop-filter: blur(10px);
+        background: rgba(251, 246, 241, 0.9);
+        border-bottom: 1px solid rgba(234, 223, 213, 0.7);
+        padding: 12px 14px 14px;
       }
-      .header-top {
+
+      .brand-row {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
         margin-bottom: 14px;
       }
-      .shop-title {
+
+      .brand-block h1 {
         font-family: "Cormorant Garamond", serif;
-        font-size: 26px;
+        font-size: 34px;
         font-weight: 600;
-        letter-spacing: -0.3px;
-        color: var(--text);
+        letter-spacing: -0.02em;
         line-height: 1;
       }
-      .shop-title span {
-        color: var(--rose);
+
+      .brand-block p {
+        color: var(--muted);
+        margin-top: 2px;
+        font-size: 12px;
       }
-      .header-icon {
+
+      .icon-btn {
         width: 38px;
         height: 38px;
-        background: var(--rose-lt);
+        border: 1px solid rgba(169, 184, 159, 0.45);
+        background: #fffaf6;
         border-radius: 50%;
+        color: #66735f;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
       }
 
-      /* ── TABS ── */
-      .tabs {
+      .hero {
+        padding: 6px 4px 0;
+      }
+
+      .hero h2 {
+        font-family: "Cormorant Garamond", serif;
+        font-size: clamp(34px, 7.5vw, 48px);
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+
+      .hero h2 span {
+        color: var(--dust-rose);
+      }
+
+      .filters {
+        margin-top: 14px;
         display: flex;
         gap: 8px;
-        padding-bottom: 14px;
         overflow-x: auto;
+        padding-bottom: 2px;
         scrollbar-width: none;
       }
-      .tabs::-webkit-scrollbar {
+
+      .filters::-webkit-scrollbar {
         display: none;
       }
-      .tab {
-        flex-shrink: 0;
-        padding: 7px 16px;
-        border-radius: 20px;
-        border: 1.5px solid var(--border);
-        background: transparent;
-        font-family: "DM Sans", sans-serif;
+
+      .chip {
+        border: 1px solid #e7ddd3;
+        background: #fffbf8;
+        color: #747a6f;
+        border-radius: 999px;
+        padding: 8px 13px;
+        white-space: nowrap;
         font-size: 13px;
         font-weight: 500;
-        color: var(--muted);
         cursor: pointer;
-        transition: all 0.2s;
-      }
-      .tab.active {
-        background: var(--rose);
-        border-color: var(--rose);
-        color: #fff;
+        transition: all 0.2s ease;
       }
 
-      /* ── CATALOG GRID ── */
+      .chip.active {
+        color: #f8f4ec;
+        background: var(--soft-green);
+        border-color: var(--soft-green);
+      }
+
+      .catalog-wrap {
+        padding: 14px 12px 0;
+      }
+
       .catalog {
-        padding: 16px 12px 100px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 12px;
       }
 
-      /* ── BOUQUET CARD ── */
       .card {
         background: var(--card);
-        border-radius: var(--radius);
+        border-radius: var(--radius-lg);
         overflow: hidden;
-        box-shadow: var(--shadow);
+        box-shadow: var(--shadow-card);
+        border: 1px solid #f0e6dc;
+        position: relative;
         cursor: pointer;
         transition:
-          transform 0.18s,
-          box-shadow 0.18s;
-        position: relative;
-      }
-      .card:active {
-        transform: scale(0.97);
-      }
-      .card.dimmed {
-        opacity: 0.5;
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
       }
 
-      .card-img {
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      .card.is-hidden {
+        opacity: 0.45;
+      }
+
+      .card-media {
+        position: relative;
+        aspect-ratio: 3 / 4;
         width: 100%;
-        aspect-ratio: 3/4;
+        background: #f3ece5;
+      }
+
+      .card-media img {
+        width: 100%;
+        height: 100%;
         object-fit: cover;
         display: block;
-        background: var(--rose-lt);
       }
-      .card-img-placeholder {
+
+      .media-fallback {
         width: 100%;
-        aspect-ratio: 3/4;
+        height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 52px;
+        font-size: 54px;
       }
+
+      .fav-btn {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.85);
+        color: #8f9688;
+        font-size: 16px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .fav-btn.active {
+        color: #d48870;
+      }
+
       .card-body {
-        padding: 10px 12px 12px;
+        padding: 10px 11px 12px;
       }
-      .card-status {
+
+      .card-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 24px;
+        font-weight: 600;
+        line-height: 1;
+      }
+
+      .card-price {
+        margin-top: 5px;
+        font-weight: 600;
+        font-size: 15px;
+      }
+
+      .card-tagline {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .badge {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
+        border-radius: 999px;
+        margin-top: 7px;
+        padding: 3px 9px;
         font-size: 11px;
-        font-weight: 500;
-        padding: 3px 8px;
-        border-radius: 10px;
-        margin-bottom: 6px;
-      }
-      .status-available {
-        background: #e8f5e9;
-        color: #2e7d32;
-      }
-      .status-order {
-        background: #fff3e0;
-        color: #e65100;
-      }
-      .status-hidden {
-        background: #f5f5f5;
-        color: #9e9e9e;
-      }
-
-      .card-name {
-        font-family: "Cormorant Garamond", serif;
-        font-size: 17px;
         font-weight: 600;
-        line-height: 1.2;
-        margin-bottom: 4px;
-      }
-      .card-price {
-        font-size: 15px;
-        font-weight: 500;
-        color: var(--rose-dk);
       }
 
-      /* ── LOADING ── */
+      .badge.available {
+        background: #edf5ea;
+        color: #5d7a50;
+      }
+
+      .badge.order {
+        background: #fef3e9;
+        color: #a36d4f;
+      }
+
+      .card-badge {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+      }
+
+      .card-badge.available {
+        background: rgba(237, 245, 234, 0.92);
+        color: #5d7a50;
+      }
+
+      .card-badge.order {
+        background: rgba(254, 243, 233, 0.92);
+        color: #a36d4f;
+      }
+
+      .empty,
       .loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-        gap: 16px;
-        color: var(--muted);
+        grid-column: 1 / -1;
+        border-radius: var(--radius-lg);
+        border: 1px dashed #e7dbd0;
+        background: #fffaf5;
+        text-align: center;
+        color: #7a7f72;
+        padding: 48px 20px;
       }
-      .petal-spin {
-        font-size: 42px;
-        animation: spin 1.6s linear infinite;
+
+      .loading .spin {
+        display: inline-block;
+        animation: spin 1.3s linear infinite;
       }
+
       @keyframes spin {
         to {
           transform: rotate(360deg);
         }
       }
 
-      /* ── BOTTOM SHEET ── */
+      .bottom-nav {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(700px, calc(100% - 16px));
+        bottom: 10px;
+        z-index: 35;
+        border-radius: 20px;
+        border: 1px solid #eadfd4;
+        background: rgba(255, 251, 246, 0.95);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 12px 24px rgba(68, 54, 44, 0.14);
+        padding: 6px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+      }
+
+      .nav-btn {
+        border: none;
+        background: transparent;
+        border-radius: 14px;
+        padding: 8px 4px;
+        font-size: 11px;
+        color: #787f74;
+        display: grid;
+        justify-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+
+      .nav-btn.active {
+        background: #eef4eb;
+        color: #607256;
+        font-weight: 600;
+      }
+
+      .nav-icon {
+        font-size: 17px;
+        line-height: 1;
+      }
+
+      .nav-counter {
+        display: inline-block;
+        min-width: 16px;
+        padding: 1px 5px;
+        border-radius: 999px;
+        background: #d9a894;
+        color: #fff;
+        font-size: 10px;
+      }
+
       .overlay {
         position: fixed;
         inset: 0;
-        background: rgba(44, 24, 16, 0.45);
-        z-index: 200;
+        background: rgba(36, 36, 28, 0.4);
+        z-index: 45;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s;
+        transition: opacity 0.28s ease;
       }
+
       .overlay.open {
         opacity: 1;
         pointer-events: all;
@@ -233,330 +544,813 @@
 
       .sheet {
         position: fixed;
-        bottom: 0;
         left: 0;
         right: 0;
-        background: var(--cream);
-        border-radius: 24px 24px 0 0;
-        z-index: 210;
-        transform: translateY(100%);
-        transition: transform 0.35s cubic-bezier(0.32, 1.2, 0.56, 1);
-        max-height: 92vh;
+        bottom: 0;
+        z-index: 50;
+        background: #fcf6f1;
+        border-radius: 28px 28px 0 0;
+        transform: translateY(102%);
+        transition: transform 0.34s cubic-bezier(0.2, 0.88, 0.24, 1.08);
+        max-height: 94dvh;
         display: flex;
         flex-direction: column;
       }
+
       .sheet.open {
         transform: translateY(0);
       }
 
       .sheet-handle {
-        width: 40px;
+        width: 42px;
         height: 4px;
-        background: var(--border);
-        border-radius: 2px;
-        margin: 12px auto 0;
-        flex-shrink: 0;
-      }
-      .sheet-scroll {
-        overflow-y: auto;
-        flex: 1;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 120px;
+        border-radius: 999px;
+        background: #e3d7cd;
+        margin: 10px auto 8px;
       }
 
-      /* ── CAROUSEL ── */
-      .carousel {
-        position: relative;
+      .sheet-scroll {
+        overflow-y: auto;
+        padding: 0 14px 130px;
+      }
+
+      .sheet-media {
+        border-radius: 18px;
         overflow: hidden;
-        border-radius: 0;
-        margin: 16px 16px 0;
-        border-radius: 16px;
-        aspect-ratio: 4/3;
-        background: var(--rose-lt);
+        aspect-ratio: 4 / 3;
+        background: #f2ebe4;
+        position: relative;
       }
-      .carousel-track {
+
+      .sheet-track {
         display: flex;
+        width: 100%;
         height: 100%;
-        transition: transform 0.3s ease;
+        transition: transform 0.28s ease;
       }
-      .carousel-slide {
+
+      .slide {
         min-width: 100%;
         height: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 80px;
+        font-size: 84px;
+        flex-shrink: 0;
       }
-      .carousel-slide img {
+
+      .slide img,
+      .slide video {
         width: 100%;
         height: 100%;
         object-fit: cover;
       }
-      .carousel-dots {
+
+      .sheet-top-controls {
         position: absolute;
-        bottom: 10px;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+
+      .sheet-round-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        color: #6f7869;
+        font-size: 18px;
+        pointer-events: auto;
+      }
+
+      .sheet-dots {
+        position: absolute;
         left: 0;
         right: 0;
+        bottom: 10px;
         display: flex;
         justify-content: center;
-        gap: 5px;
+        gap: 6px;
       }
+
       .dot {
         width: 6px;
         height: 6px;
-        border-radius: 3px;
-        background: rgba(255, 255, 255, 0.5);
-        transition: all 0.2s;
-      }
-      .dot.active {
-        width: 18px;
-        background: #fff;
-      }
-      .carousel-btn {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 32px;
-        height: 32px;
-        background: rgba(255, 255, 255, 0.85);
-        border: none;
-        border-radius: 50%;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-      }
-      .carousel-btn.prev {
-        left: 10px;
-      }
-      .carousel-btn.next {
-        right: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.65);
       }
 
-      /* ── SHEET CONTENT ── */
-      .sheet-content {
-        padding: 20px 18px 0;
+      .dot.active {
+        width: 18px;
+        background: #ffffff;
+      }
+
+      .sheet-info {
+        padding: 16px 4px 0;
       }
 
       .sheet-name {
         font-family: "Cormorant Garamond", serif;
-        font-size: 32px;
-        font-weight: 700;
-        line-height: 1.1;
-        margin-bottom: 6px;
-      }
-      .sheet-desc {
-        color: var(--muted);
-        font-size: 14px;
-        line-height: 1.6;
-        margin-bottom: 16px;
-      }
-
-      .flowers-label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        margin-bottom: 8px;
-      }
-      .flower-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-bottom: 20px;
-      }
-      .flower-tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 12px;
-        background: var(--rose-lt);
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 400;
-        color: var(--rose-dk);
-      }
-
-      .sheet-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 0;
-        border-top: 1px solid var(--border);
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 20px;
-      }
-      .meta-status {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-      }
-      .meta-label {
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .meta-value {
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 43px;
+        line-height: 0.92;
       }
 
       .sheet-price {
+        margin-top: 4px;
+        font-size: 30px;
         font-family: "Cormorant Garamond", serif;
-        font-size: 38px;
         font-weight: 700;
-        color: var(--text);
-        text-align: center;
-        margin-bottom: 16px;
-      }
-      .price-rub {
-        font-size: 28px;
       }
 
-      /* ── BUY BUTTON ── */
-      .buy-wrap {
+      .sheet-desc {
+        margin-top: 10px;
+        color: #667064;
+        line-height: 1.45;
+      }
+
+      .meta-grid {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        align-items: start;
+      }
+
+      .compose-list {
+        white-space: pre-line;
+        line-height: 1.6;
+      }
+
+      .meta-item {
+        border-radius: 14px;
+        border: 1px solid #eadfd4;
+        background: #fffcf8;
+        padding: 10px;
+      }
+
+      .meta-label {
+        font-size: 11px;
+        color: #8a9087;
+      }
+
+      .meta-value {
+        margin-top: 4px;
+        font-size: 14px;
+        color: #576052;
+      }
+
+      .sheet-section-title {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #8f968c;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .tags {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .tag {
+        border-radius: 999px;
+        background: #f6ece4;
+        color: #8d6c5d;
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .sheet-actions {
         position: fixed;
-        bottom: 0;
         left: 0;
         right: 0;
-        padding: 12px 18px 28px;
-        background: linear-gradient(to top, var(--cream) 60%, transparent);
-        z-index: 220;
-      }
-      .buy-btn {
-        width: 100%;
-        padding: 16px;
-        background: var(--rose);
-        color: #fff;
-        border: none;
-        border-radius: 16px;
-        font-family: "DM Sans", sans-serif;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        transition:
-          background 0.2s,
-          transform 0.15s;
-        letter-spacing: 0.2px;
-      }
-      .buy-btn:active {
-        transform: scale(0.98);
-        background: var(--rose-dk);
-      }
-      .buy-btn:disabled {
-        background: var(--border);
-        color: var(--muted);
-        cursor: not-allowed;
+        bottom: 0;
+        z-index: 52;
+        background: linear-gradient(
+          to top,
+          #fcf6f1 70%,
+          rgba(252, 246, 241, 0)
+        );
+        padding: 12px 14px 24px;
       }
 
-      /* ── EMPTY ── */
-      .empty {
-        grid-column: 1/-1;
-        text-align: center;
-        padding: 60px 20px;
-        color: var(--muted);
+      .qty-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
       }
-      .empty-icon {
-        font-size: 48px;
-        margin-bottom: 12px;
+
+      .qty {
+        width: 118px;
+        border-radius: 999px;
+        border: 1px solid #e8dbcf;
+        background: #fffaf6;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 12px;
+      }
+
+      .qty button {
+        border: none;
+        background: transparent;
+        color: #687062;
+        font-size: 22px;
+        width: 20px;
+      }
+
+      .qty span {
+        font-weight: 600;
+      }
+
+      .main-cta {
+        flex: 1;
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(130deg, var(--soft-green), #7f9574);
+        color: #f8f5ee;
+        font-size: 16px;
+        font-weight: 600;
+        padding: 14px 18px;
+        box-shadow: 0 8px 18px rgba(86, 106, 80, 0.2);
+        cursor: pointer;
+        transition:
+          transform 0.14s ease,
+          box-shadow 0.14s ease;
+      }
+
+      .main-cta:active {
+        transform: scale(0.96);
+        box-shadow: 0 3px 8px rgba(86, 106, 80, 0.15);
+      }
+
+      .main-cta:disabled {
+        background: #d6d7cf;
+        color: #7d8077;
+      }
+
+      .service-card {
+        margin-top: 10px;
+        border-radius: var(--radius-xl);
+        border: 1px solid #e8dcd2;
+        background: linear-gradient(160deg, #fffcf8 0%, #f4ece4 100%);
+        padding: 18px;
+      }
+
+      .service-card h3 {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 32px;
+        line-height: 1;
+      }
+
+      .service-card p {
+        margin-top: 8px;
+        color: #677163;
+        line-height: 1.4;
+      }
+
+      .service-card .main-cta {
+        margin-top: 12px;
+        width: 100%;
+      }
+
+      /* ── BUILDER SHEET ── */
+      .builder-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(36, 36, 28, 0.4);
+        z-index: 55;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+      }
+
+      .builder-overlay.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .bsheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        background: #fcf6f1;
+        border-radius: 28px 28px 0 0;
+        transform: translateY(102%);
+        transition: transform 0.34s cubic-bezier(0.2, 0.88, 0.24, 1.08);
+        max-height: 94dvh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .bsheet.open {
+        transform: translateY(0);
+      }
+
+      .bsheet-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid #eadfd4;
+        flex-shrink: 0;
+      }
+
+      .bsheet-back {
+        border: none;
+        background: none;
+        font-size: 20px;
+        color: #5a6855;
+        cursor: pointer;
+        padding: 0 4px;
+      }
+
+      .bsheet-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .bsheet-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 14px 14px 90px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .bsheet-label {
+        font-size: 12px;
+        color: #8f968c;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 10px;
+      }
+
+      .bsheet-section {
+        margin-bottom: 20px;
+      }
+
+      .bsheet-flowers {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+
+      .bsheet-flowers::-webkit-scrollbar {
+        display: none;
+      }
+
+      .flower-card {
+        flex-shrink: 0;
+        width: 90px;
+        border-radius: 16px;
+        border: 2px solid #eadfd4;
+        background: #fffcf8;
+        padding: 12px 8px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.18s,
+          background 0.18s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .flower-card.selected {
+        border-color: var(--soft-green);
+        background: #eef5eb;
+      }
+
+      .flower-card-emoji {
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .flower-card-name {
+        font-size: 12px;
+        color: #576052;
+        line-height: 1.2;
+      }
+
+      .flower-qty {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 4px;
+      }
+
+      .flower-qty-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1px solid #c5d4be;
+        background: #fff;
+        color: #576052;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .flower-qty-val {
+        font-size: 13px;
+        font-weight: 600;
+        color: #3d4b3e;
+        min-width: 16px;
+        text-align: center;
+      }
+
+      .bsheet-bouquets {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+      }
+
+      .bsheet-bouquets::-webkit-scrollbar {
+        display: none;
+      }
+
+      .bsheet-match-card {
+        flex-shrink: 0;
+        width: 115px;
+        border-radius: 14px;
+        border: 1px solid #eadfd4;
+        background: #fffcf8;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .bsheet-match-img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        display: block;
+      }
+
+      .bsheet-match-ph {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+      }
+
+      .bsheet-match-info {
+        padding: 6px 8px 8px;
+      }
+
+      .bsheet-match-name {
+        font-size: 13px;
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 600;
+        line-height: 1.1;
+      }
+
+      .bsheet-match-price {
+        font-size: 12px;
+        color: #7a6a5f;
+        margin-top: 2px;
+      }
+
+      .bsheet-foot {
+        padding: 10px 14px 24px;
+        background: linear-gradient(to top, #fcf6f1 65%, transparent);
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 760px) {
+        .header {
+          padding: 16px 24px 14px;
+        }
+
+        .catalog-wrap {
+          padding: 18px 24px 0;
+        }
+
+        .catalog {
+          gap: 16px;
+        }
+
+        .bottom-nav {
+          bottom: 14px;
+        }
+
+        .sheet {
+          max-width: 700px;
+          margin: 0 auto;
+          left: 50%;
+          transform: translate(-50%, 102%);
+          right: auto;
+          width: calc(100% - 26px);
+        }
+
+        .sheet.open {
+          transform: translate(-50%, 0);
+        }
+
+        .sheet-actions {
+          left: 50%;
+          width: min(700px, calc(100% - 26px));
+          transform: translateX(-50%);
+          border-radius: 24px 24px 0 0;
+        }
+
+        .bsheet {
+          max-width: 700px;
+          left: 50%;
+          transform: translate(-50%, 102%);
+          right: auto;
+          width: calc(100% - 26px);
+        }
+
+        .bsheet.open {
+          transform: translate(-50%, 0);
+        }
+
+        .bsheet-foot {
+          border-radius: 24px 24px 0 0;
+        }
+      }
+
+      @media (min-width: 860px) {
+        .catalog {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 1180px) {
+        .catalog {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
       }
     </style>
   </head>
   <body>
-    <div class="header">
-      <div class="header-top">
-        <div class="shop-title">🌸 Цветочная<span> витрина</span></div>
-        <div class="header-icon">💐</div>
-      </div>
-      <div class="tabs">
-        <button class="tab active" data-filter="all">Все букеты</button>
-        <button class="tab" data-filter="available">✅ В наличии</button>
-        <button class="tab" data-filter="order">🕐 На заказ</button>
-      </div>
-    </div>
+    <div class="app">
+      <section class="welcome" id="welcomeScreen">
+        <article class="welcome-card">
+          <span class="welcome-flower f-1">✿</span>
+          <span class="welcome-flower f-2">❀</span>
+          <span class="welcome-flower f-3">✿</span>
 
-    <div class="catalog" id="catalog">
-      <div class="loading" style="grid-column: 1/-1">
-        <div class="petal-spin">🌸</div>
-        <div>Загружаем букеты…</div>
-      </div>
-    </div>
+          <div class="welcome-copy">
+            <h1 class="brand">Bloome</h1>
+            <div class="brand-note">цветы с душой</div>
+            <p class="welcome-text">
+              Авторские букеты<br />для особенных моментов
+            </p>
+          </div>
 
-    <!-- OVERLAY -->
-    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+          <button class="welcome-btn" id="enterBtn">Войти в витрину</button>
+        </article>
+      </section>
 
-    <!-- BOTTOM SHEET -->
-    <div class="sheet" id="sheet">
-      <div class="sheet-handle"></div>
-      <div class="sheet-scroll" id="sheetScroll">
-        <!-- Карусель -->
-        <div class="carousel" id="carousel">
-          <div class="carousel-track" id="carouselTrack"></div>
-          <div class="carousel-dots" id="carouselDots"></div>
-          <button class="carousel-btn prev" onclick="slideCarousel(-1)">
-            ‹
-          </button>
-          <button class="carousel-btn next" onclick="slideCarousel(1)">
-            ›
-          </button>
-        </div>
-
-        <div class="sheet-content">
-          <div class="sheet-name" id="sheetName"></div>
-          <div class="sheet-desc" id="sheetDesc"></div>
-          <div class="flowers-label">Состав букета</div>
-          <div class="flower-tags" id="sheetFlowers"></div>
-          <div class="sheet-meta">
-            <div class="meta-status">
-              <div class="meta-label">Статус</div>
-              <div class="meta-value" id="sheetStatus"></div>
+      <main class="shell hidden" id="mainScreen">
+        <header class="header">
+          <div class="brand-row">
+            <div class="brand-block">
+              <h1>Bloome</h1>
+              <p>Онлайн витрина</p>
             </div>
-            <div class="meta-status" style="text-align: right">
-              <div class="meta-label">Время изготовления</div>
-              <div class="meta-value" id="sheetTime"></div>
+            <button class="icon-btn" type="button" aria-label="Корзина">
+              🛍
+            </button>
+          </div>
+
+          <section class="hero">
+            <h2>Выберите свой букет<br />с душой <span>♥</span></h2>
+          </section>
+
+          <div class="filters" id="filters"></div>
+        </header>
+
+        <section class="catalog-wrap">
+          <div class="catalog" id="catalog">
+            <div class="loading">
+              <div class="spin">🌸</div>
+              <div style="margin-top: 8px">Собираем весеннюю витрину...</div>
             </div>
           </div>
+
+          <article class="service-card" id="serviceCard">
+            <h3>Букет на заказ</h3>
+            <p>
+              Подберем композицию под бюджет, повод и настроение. Упаковка и
+              стиль в единой эстетике витрины.
+            </p>
+            <button class="main-cta" type="button" onclick="openBuilderSheet()">
+              Собрать букет
+            </button>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav hidden" id="bottomNav">
+      <button class="nav-btn active" data-nav="home" type="button">
+        <span class="nav-icon">✿</span>
+        <span>Главная</span>
+      </button>
+      <button class="nav-btn" data-nav="fav" type="button">
+        <span class="nav-icon">♡</span>
+        <span>Избранное <span class="nav-counter" id="favCount">0</span></span>
+      </button>
+      <button class="nav-btn" data-nav="cart" type="button">
+        <span class="nav-icon">🛍</span>
+        <span>Корзина <span class="nav-counter" id="cartCount">0</span></span>
+      </button>
+      <button class="nav-btn" data-nav="about" type="button">
+        <span class="nav-icon">i</span>
+        <span>О нас</span>
+      </button>
+    </nav>
+
+    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+    <section class="sheet" id="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-scroll" id="sheetScroll">
+        <div class="sheet-media" id="sheetMedia">
+          <div class="sheet-track" id="sheetTrack"></div>
+          <div class="sheet-top-controls">
+            <button
+              class="sheet-round-btn"
+              type="button"
+              onclick="closeSheet()"
+            >
+              ←
+            </button>
+            <button
+              class="sheet-round-btn"
+              type="button"
+              id="sheetFavBtn"
+              onclick="toggleCurrentFavorite()"
+            >
+              ♡
+            </button>
+          </div>
+          <div class="sheet-dots" id="sheetDots"></div>
+        </div>
+
+        <div class="sheet-info">
+          <h3 class="sheet-name" id="sheetName"></h3>
           <div class="sheet-price" id="sheetPrice"></div>
+          <p class="sheet-desc" id="sheetDesc"></p>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Состав</div>
+              <div class="meta-value compose-list" id="sheetComposeShort">
+                Уточняется
+              </div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Размер</div>
+              <div class="meta-value" id="sheetSize">Средний</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Стойкость</div>
+              <div class="meta-value" id="sheetDurability">До 5 дней</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="buy-wrap" id="buyWrap" style="display: none">
-        <button class="buy-btn" id="buyBtn" onclick="handleBuy()"></button>
+      <div class="sheet-actions" id="sheetActions">
+        <div class="qty-row">
+          <div class="qty" id="qtyWrap">
+            <button type="button" onclick="changeQty(-1)">−</button>
+            <span id="qtyValue">1</span>
+            <button type="button" onclick="changeQty(1)">+</button>
+          </div>
+          <button
+            class="main-cta"
+            id="ctaBtn"
+            type="button"
+            onclick="handleAction()"
+          >
+            Добавить в корзину
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
+
+    <div
+      class="builder-overlay"
+      id="builderOverlay"
+      onclick="closeBuilder()"
+    ></div>
+    <section class="bsheet" id="builderSheet">
+      <div class="bsheet-header">
+        <button class="bsheet-back" type="button" onclick="closeBuilder()">
+          ←
+        </button>
+        <h3 class="bsheet-title">Собрать букет</h3>
+      </div>
+      <div class="bsheet-scroll" id="bsheetScroll">
+        <div
+          class="bsheet-section"
+          id="builderMatchSection"
+          style="display: none"
+        >
+          <div class="bsheet-label">Букеты из ваших цветов</div>
+          <div class="bsheet-bouquets" id="builderMatchBouquets"></div>
+        </div>
+        <div class="bsheet-label">Выберите цветы</div>
+        <div class="bsheet-flowers" id="builderFlowers"></div>
+      </div>
+      <div class="bsheet-foot">
+        <button
+          class="main-cta"
+          id="builderCta"
+          type="button"
+          onclick="submitBuilder()"
+          style="width: 100%"
+        >
+          Отправить заявку
+        </button>
+      </div>
+    </section>
 
     <script>
-      // ── CONFIG ──────────────────────────────────────────────
       const SHEET_ID = "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc";
 
-      // Telegram WebApp init
       const tg = window.Telegram?.WebApp;
       if (tg) {
         tg.ready();
         tg.expand();
       }
 
-      // ── GRADIENT PLACEHOLDERS (пока нет фото) ─────────────
       const GRADIENTS = [
-        ["#F9CDD2", "#F48FB1", "🌹"],
-        ["#FDDEC0", "#FFAB76", "🌸"],
-        ["#D4EDDA", "#81C784", "💐"],
-        ["#FFF9C4", "#FFD54F", "🌼"],
-        ["#E1BEE7", "#CE93D8", "🌷"],
-        ["#B2EBF2", "#80DEEA", "🌿"],
+        ["#f8d7d8", "#e7b3ba", "🌷"],
+        ["#fbe3cf", "#efbf9f", "🌸"],
+        ["#e2ebda", "#c7d7bb", "💐"],
+        ["#f7ecde", "#f0d7c2", "🌼"],
       ];
+
+      let bouquets = [];
+      let composition = [];
+      let flowers = [];
+      let media = [];
+      let groupFilters = [{ key: "all", label: "Все букеты" }];
+      let currentGroup = "all";
+      let currentView = "home";
+      let favorites = new Set();
+      let cartMap = new Map();
+      let cartItems = 0;
+      let currentBouquet = null;
+      let currentQty = 1;
+      let slides = [];
+      let slideIndex = 0;
 
       function getGradient(i) {
         return GRADIENTS[i % GRADIENTS.length];
       }
 
-      // ── GOOGLE SHEETS FETCH ──────────────────────────────
+      function normalize(value) {
+        return String(value || "")
+          .toLowerCase()
+          .replace(/ё/g, "е")
+          .trim();
+      }
+
+      function toNumber(v) {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function normalizeId(value) {
+        return String(value ?? "").trim();
+      }
+
+      function splitGroups(value) {
+        return String(value || "")
+          .split(/[,;|]/)
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+
       async function fetchSheet(name) {
         const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`;
-        const res = await fetch(url);
-        const text = await res.text();
+        const response = await fetch(url);
+        const text = await response.text();
         const json = JSON.parse(text.substring(47, text.length - 2));
         const cols = json.table.cols.map((c) => c.label);
         return json.table.rows.map((row) => {
@@ -568,17 +1362,566 @@
         });
       }
 
-      // ── STATE ─────────────────────────────────────────────
-      let bouquets = [];
-      let composition = [];
-      let flowers = [];
-      let media = [];
-      let currentFilter = "all";
-      let currentBouquet = null;
-      let carouselIndex = 0;
-      let carouselSlides = [];
+      function statusCode(b) {
+        if (!b.admin_visible) return "hidden";
+        return toNumber(b.stock_qty) > 0 ? "available" : "order";
+      }
 
-      // ── LOAD DATA ─────────────────────────────────────────
+      function statusBadge(s) {
+        if (s === "available")
+          return '<span class="badge available">В наличии</span>';
+        if (s === "order") return '<span class="badge order">На заказ</span>';
+        return "";
+      }
+
+      function cardBadge(s) {
+        if (s === "available")
+          return '<span class="card-badge available">В наличии</span>';
+        if (s === "order")
+          return '<span class="card-badge order">На заказ</span>';
+        return "";
+      }
+
+      function mediaFor(bouquetId) {
+        const target = normalizeId(bouquetId);
+        return media
+          .filter((m) => normalizeId(m.bouquet_id) === target)
+          .sort(
+            (a, b) =>
+              toNumber(a.order ?? a.sort ?? a.position) -
+              toNumber(b.order ?? b.sort ?? b.position),
+          );
+      }
+
+      function firstImageFor(bouquetId) {
+        const target = normalizeId(bouquetId);
+        return media.find(
+          (m) =>
+            normalizeId(m.bouquet_id) === target &&
+            normalize(m.type) !== "video",
+        );
+      }
+
+      function classifyBouquet(b) {
+        const source = [
+          b.name,
+          b.description,
+          b.tags,
+          b.category,
+          b.mood,
+          b.palette,
+          b.occasion,
+          b.style,
+        ]
+          .map(normalize)
+          .join(" ");
+
+        const price = toNumber(b.price);
+        const premiumByPrice = price >= 5000;
+        const premiumByTag = /премиум|premium|lux/.test(source);
+        const mixedByTag = /сборн|микс|mix|авторск/.test(source);
+        const tenderByTag = /нежн|пастел|крем|розов|молоч|светл/.test(source);
+        const brightByTag = /ярк|ал|оранж|сочн|контраст/.test(source);
+        const forHerByTag = /для нее|для неё|свидан|любим|девуш|женщ/.test(
+          source,
+        );
+
+        return {
+          tender: tenderByTag || !brightByTag,
+          bright: brightByTag,
+          forHer: forHerByTag || tenderByTag,
+          mixed: mixedByTag || toNumber(b.components_count) > 4,
+          budget: price > 0 && price <= 4000,
+          premium: premiumByPrice || premiumByTag,
+          moodText: tenderByTag
+            ? "Нежная композиция"
+            : brightByTag
+              ? "Яркий цветочный акцент"
+              : "Авторская композиция",
+        };
+      }
+
+      function matchGroup(item, filter) {
+        if (filter === "all") return true;
+        return item._groups.includes(filter);
+      }
+
+      function listByView(items) {
+        if (currentView === "fav")
+          return items.filter((item) => favorites.has(item.id));
+        if (currentView === "cart")
+          return items.filter((item) => cartMap.has(item.id));
+        return items;
+      }
+
+      function buildGroupFilters() {
+        const labels = new Set();
+        bouquets.forEach((b) => {
+          splitGroups(b.groups).forEach((group) => labels.add(group));
+        });
+
+        groupFilters = [{ key: "all", label: "Все букеты" }].concat(
+          Array.from(labels).map((label) => ({ key: label, label })),
+        );
+
+        if (!groupFilters.some((f) => f.key === currentGroup)) {
+          currentGroup = "all";
+        }
+      }
+
+      function buildFilters() {
+        const holder = document.getElementById("filters");
+        holder.innerHTML = groupFilters
+          .map(
+            (f) =>
+              `<button class="chip ${f.key === currentGroup ? "active" : ""}" data-filter="${f.key}">${f.label}</button>`,
+          )
+          .join("");
+
+        holder.querySelectorAll(".chip").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            currentGroup = btn.dataset.filter;
+            currentView = "home";
+            syncNav();
+            buildFilters();
+            renderCatalog();
+          });
+        });
+      }
+
+      function cardTemplate(item) {
+        const grad = getGradient(item._idx);
+        const status = item._status;
+        const pic = firstImageFor(item.id);
+        const isFav = favorites.has(item.id);
+        const dimmed = status === "hidden" ? "is-hidden" : "";
+
+        const mediaHtml = pic
+          ? `<img src="${pic.url}" alt="${item.name}" loading="lazy"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+             <div class="media-fallback" style="display:none;background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`
+          : `<div class="media-fallback" style="background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`;
+
+        return `<article class="card ${dimmed}" onclick="openBouquet('${item.id}')">
+          <div class="card-media">
+            ${mediaHtml}
+            <button class="fav-btn ${isFav ? "active" : ""}" type="button"
+              onclick="event.stopPropagation();toggleFavorite('${item.id}')">${
+                isFav ? "❤" : "♡"
+              }</button>
+            ${cardBadge(status)}
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">${item.name}</h3>
+            <div class="card-price">${toNumber(item.price).toLocaleString("ru-RU")} ₽</div>
+          </div>
+        </article>`;
+      }
+
+      function renderCatalog() {
+        const catalog = document.getElementById("catalog");
+
+        const prepared = bouquets
+          .map((b, i) => ({
+            ...b,
+            _idx: i,
+            id: normalizeId(b.id),
+            _status: statusCode(b),
+            _traits: classifyBouquet(b),
+            _groups: splitGroups(b.groups),
+          }))
+          .filter((b) => b._status !== "hidden")
+          .filter((b) => matchGroup(b, currentGroup));
+
+        const visible = listByView(prepared);
+
+        if (!visible.length) {
+          catalog.innerHTML =
+            '<div class="empty">В этом разделе пока пусто. Попробуйте другой фильтр или вернитесь на главную.</div>';
+          return;
+        }
+
+        catalog.innerHTML = visible.map((item) => cardTemplate(item)).join("");
+      }
+
+      function compositionOf(id) {
+        const target = normalizeId(id);
+        return composition
+          .filter((c) => normalizeId(c.bouquet_id) === target)
+          .map((c) => {
+            const f = flowers.find(
+              (x) => normalizeId(x.id) === normalizeId(c.flower_id),
+            );
+            return f ? `${f.emoji || "🌸"} ${f.name}` : "";
+          })
+          .filter(Boolean);
+      }
+
+      function buildSlidesFor(b) {
+        const grad = getGradient(b._idx ?? 0);
+        const bMedia = mediaFor(b.id);
+        if (!bMedia.length) {
+          return [
+            {
+              type: "placeholder",
+              color1: grad[0],
+              color2: grad[1],
+              emoji: grad[2],
+            },
+            {
+              type: "placeholder",
+              color1: grad[1],
+              color2: grad[0],
+              emoji: grad[2],
+            },
+          ];
+        }
+        return bMedia;
+      }
+
+      function openBouquet(id) {
+        const target = normalizeId(id);
+        const bouquet = bouquets.find((b) => normalizeId(b.id) === target);
+        if (!bouquet) return;
+        currentBouquet = bouquet;
+        currentQty = 1;
+        document.getElementById("qtyValue").textContent = "1";
+
+        const item = {
+          ...bouquet,
+          _idx: bouquets.findIndex((x) => normalizeId(x.id) === target),
+          _traits: classifyBouquet(bouquet),
+        };
+        const comp = compositionOf(target);
+        const source = normalize(
+          [bouquet.description, bouquet.tags, bouquet.occasion].join(" "),
+        );
+
+        slides = buildSlidesFor(item);
+        slideIndex = 0;
+        renderSlides();
+
+        document.getElementById("sheetName").textContent =
+          bouquet.name || "Букет";
+        document.getElementById("sheetPrice").textContent =
+          `${toNumber(bouquet.price).toLocaleString("ru-RU")} ₽`;
+        document.getElementById("sheetDesc").textContent =
+          bouquet.description ||
+          "Легкая воздушная композиция в мягкой весенней палитре, собранная под настроение момента.";
+
+        document.getElementById("sheetComposeShort").textContent = comp.length
+          ? comp.join("\n")
+          : "🌷 Тюльпаны\n🌿 Эвкалипт\n🌸 Ранункулюсы";
+        document.getElementById("sheetSize").textContent =
+          bouquet.size || "Средний";
+        document.getElementById("sheetDurability").textContent =
+          bouquet.durability || bouquet.vase_life || "До 5 дней";
+
+        const fav = favorites.has(target);
+        document.getElementById("sheetFavBtn").textContent = fav ? "❤" : "♡";
+
+        document.getElementById("ctaBtn").textContent =
+          statusCode(bouquet) === "available"
+            ? "Добавить в корзину"
+            : "Заказать";
+        document.getElementById("ctaBtn").disabled = false;
+
+        document.getElementById("overlay").classList.add("open");
+        document.getElementById("sheet").classList.add("open");
+      }
+
+      function openServiceSheet() {
+        openBuilderSheet();
+      }
+
+      // ── BUILDER ───────────────────────────────────────────
+      let builderSelected = new Map();
+
+      function openBuilderSheet() {
+        builderSelected.clear();
+        renderBuilderFlowers();
+        renderBuilderMatches();
+        document.getElementById("builderOverlay").classList.add("open");
+        document.getElementById("builderSheet").classList.add("open");
+      }
+
+      function closeBuilder() {
+        document.getElementById("builderOverlay").classList.remove("open");
+        document.getElementById("builderSheet").classList.remove("open");
+      }
+
+      function getBuilderFlowers() {
+        return flowers.filter((f) => {
+          const val = normalize(String(f.buket ?? ""));
+          return val === "true" || val === "1" || val === "да" || val === "yes";
+        });
+      }
+
+      function toggleBuilderFlower(flowerId) {
+        if (builderSelected.has(flowerId)) {
+          builderSelected.delete(flowerId);
+        } else {
+          builderSelected.set(flowerId, 1);
+        }
+        renderBuilderFlowers();
+        renderBuilderMatches();
+      }
+
+      function changeBuilderQty(flowerId, delta) {
+        const current = builderSelected.get(flowerId) || 1;
+        builderSelected.set(flowerId, Math.max(1, current + delta));
+        renderBuilderFlowers();
+      }
+
+      function renderBuilderFlowers() {
+        const available = getBuilderFlowers();
+        const holder = document.getElementById("builderFlowers");
+        if (!available.length) {
+          holder.innerHTML =
+            '<div style="color:var(--muted);font-size:13px;padding:8px 0">Нет цветов для сборки</div>';
+          return;
+        }
+        holder.innerHTML = available
+          .map((f) => {
+            const id = normalizeId(f.id);
+            const sel = builderSelected.has(id);
+            const qty = builderSelected.get(id) || 1;
+            return `<div class="flower-card ${sel ? "selected" : ""}" onclick="toggleBuilderFlower('${id}')">
+              <div class="flower-card-emoji">${f.emoji || "🌸"}</div>
+              <div class="flower-card-name">${f.name}</div>
+              ${
+                sel
+                  ? `<div class="flower-qty" onclick="event.stopPropagation()">
+                <button class="flower-qty-btn" type="button" onclick="changeBuilderQty('${id}',-1)">−</button>
+                <span class="flower-qty-val">${qty}</span>
+                <button class="flower-qty-btn" type="button" onclick="changeBuilderQty('${id}',1)">+</button>
+              </div>`
+                  : ""
+              }
+            </div>`;
+          })
+          .join("");
+      }
+
+      function getMatchingBouquets() {
+        if (!builderSelected.size) return [];
+        const selIds = Array.from(builderSelected.keys());
+        return bouquets.filter((b) => {
+          const bId = normalizeId(b.id);
+          const compIds = composition
+            .filter((c) => normalizeId(c.bouquet_id) === bId)
+            .map((c) => normalizeId(c.flower_id));
+          return selIds.some((id) => compIds.includes(id));
+        });
+      }
+
+      function renderBuilderMatches() {
+        const matched = getMatchingBouquets();
+        const section = document.getElementById("builderMatchSection");
+        const holder = document.getElementById("builderMatchBouquets");
+        if (!matched.length) {
+          section.style.display = "none";
+          return;
+        }
+        section.style.display = "block";
+        holder.innerHTML = matched
+          .map((b) => {
+            const bId = normalizeId(b.id);
+            const pic = firstImageFor(bId);
+            const grad = getGradient(bouquets.indexOf(b));
+            const imgHtml = pic
+              ? `<img class="bsheet-match-img" src="${pic.url}" alt="${b.name}" loading="lazy">`
+              : `<div class="bsheet-match-ph" style="background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`;
+            return `<div class="bsheet-match-card" onclick="closeBuilder();openBouquet('${bId}')">
+              ${imgHtml}
+              <div class="bsheet-match-info">
+                <div class="bsheet-match-name">${b.name}</div>
+                <div class="bsheet-match-price">${toNumber(b.price).toLocaleString("ru-RU")} ₽</div>
+              </div>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function submitBuilder() {
+        if (!builderSelected.size) {
+          if (tg) {
+            tg.showPopup({
+              title: "Выберите цветы",
+              message: "Отметьте хотя бы один цветок для сборки букета.",
+              buttons: [{ type: "ok", text: "Понятно" }],
+            });
+          } else {
+            alert("Отметьте хотя бы один цветок для сборки букета.");
+          }
+          return;
+        }
+        const items = Array.from(builderSelected.entries())
+          .map(([id, qty]) => {
+            const f = flowers.find((x) => normalizeId(x.id) === id);
+            return f ? `${f.emoji || "🌸"} ${f.name} × ${qty}` : "";
+          })
+          .filter(Boolean)
+          .join("\n");
+        const message = `Заявка на сборку:\n\n${items}\n\nМы свяжемся с вами для уточнения деталей.`;
+        if (tg) {
+          tg.showPopup({
+            title: "Заявка принята",
+            message,
+            buttons: [{ type: "ok", text: "Отлично" }],
+          });
+        } else {
+          alert(`Заявка принята!\n\n${message}`);
+        }
+        closeBuilder();
+      }
+
+      function renderSlides() {
+        const track = document.getElementById("sheetTrack");
+        const dots = document.getElementById("sheetDots");
+
+        track.innerHTML = slides
+          .map((slide) => {
+            if (normalize(slide.type) === "video") {
+              return `<div class="slide"><video src="${slide.url}" autoplay muted loop playsinline></video></div>`;
+            }
+            if (normalize(slide.type) === "placeholder") {
+              return `<div class="slide" style="background:linear-gradient(145deg,${slide.color1},${slide.color2})">${slide.emoji}</div>`;
+            }
+            return `<div class="slide"><img src="${slide.url}" alt="" onerror="this.parentElement.innerHTML='🌸'"></div>`;
+          })
+          .join("");
+
+        dots.innerHTML = slides
+          .map(
+            (_, i) =>
+              `<span class="dot ${i === slideIndex ? "active" : ""}"></span>`,
+          )
+          .join("");
+
+        updateSlide();
+      }
+
+      function updateSlide() {
+        document.getElementById("sheetTrack").style.transform =
+          `translateX(-${slideIndex * 100}%)`;
+        document
+          .querySelectorAll(".dot")
+          .forEach((dot, i) =>
+            dot.classList.toggle("active", i === slideIndex),
+          );
+      }
+
+      function closeSheet() {
+        document.getElementById("overlay").classList.remove("open");
+        document.getElementById("sheet").classList.remove("open");
+        currentBouquet = null;
+      }
+
+      function changeQty(delta) {
+        currentQty = Math.max(1, currentQty + delta);
+        document.getElementById("qtyValue").textContent = String(currentQty);
+      }
+
+      function toggleFavorite(id) {
+        if (favorites.has(id)) favorites.delete(id);
+        else favorites.add(id);
+        updateCounters();
+        renderCatalog();
+      }
+
+      function toggleCurrentFavorite() {
+        if (
+          !currentBouquet ||
+          !currentBouquet.id ||
+          currentBouquet.id === "service_custom"
+        )
+          return;
+        toggleFavorite(currentBouquet.id);
+        document.getElementById("sheetFavBtn").textContent = favorites.has(
+          currentBouquet.id,
+        )
+          ? "❤"
+          : "♡";
+      }
+
+      function handleAction() {
+        if (!currentBouquet) return;
+
+        if (currentBouquet.id === "service_custom") {
+          if (tg) {
+            tg.showPopup({
+              title: "Букет на заказ",
+              message:
+                "Опишите повод и бюджет в чате бота, и мы соберем персональную композицию.",
+              buttons: [{ type: "ok", text: "Понятно" }],
+            });
+          } else {
+            alert(
+              "Букет на заказ: укажите повод и бюджет, и мы предложим варианты.",
+            );
+          }
+          closeSheet();
+          return;
+        }
+
+        const cartKey = normalizeId(currentBouquet.id);
+        cartMap.set(cartKey, (cartMap.get(cartKey) || 0) + currentQty);
+        cartItems += currentQty;
+        updateCounters();
+
+        const amount = toNumber(currentBouquet.price) * currentQty;
+        const message = `${currentBouquet.name}\n${currentQty} шт.\nСумма: ${amount.toLocaleString("ru-RU")} ₽\n\nОплата через ЮKassa скоро будет подключена.`;
+
+        if (tg) {
+          tg.showPopup({
+            title: "Оплата временно недоступна",
+            message,
+            buttons: [{ type: "ok", text: "Отлично" }],
+          });
+        } else {
+          alert(`Оплата временно недоступна\n\n${message}`);
+        }
+
+        closeSheet();
+      }
+
+      function syncNav() {
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.nav === currentView);
+        });
+      }
+
+      function updateCounters() {
+        document.getElementById("favCount").textContent = String(
+          favorites.size,
+        );
+        document.getElementById("cartCount").textContent = String(cartItems);
+      }
+
+      function setupNavigation() {
+        document.querySelectorAll(".nav-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            currentView = btn.dataset.nav;
+            syncNav();
+
+            if (currentView === "about") {
+              document.getElementById("catalog").innerHTML =
+                '<div class="empty"><strong>Bloome</strong><br>Доставка по городу, свежая сборка в день заказа, бережная упаковка и открытка в подарок.</div>';
+              return;
+            }
+
+            if (currentView === "cart" && cartItems === 0) {
+              document.getElementById("catalog").innerHTML =
+                '<div class="empty">Корзина пока пуста. Выберите букет с душой и добавьте его в один тап.</div>';
+              return;
+            }
+
+            renderCatalog();
+          });
+        });
+      }
+
       async function loadData() {
         try {
           [bouquets, composition, flowers, media] = await Promise.all([
@@ -587,300 +1930,68 @@
             fetchSheet("Цветы"),
             fetchSheet("Медиа"),
           ]);
+          buildGroupFilters();
+          buildFilters();
           renderCatalog();
-        } catch (e) {
+        } catch (error) {
           document.getElementById("catalog").innerHTML =
-            `<div class="loading" style="grid-column:1/-1">
-        <div style="font-size:40px">😔</div>
-        <div>Не удалось загрузить данные</div>
-        <div style="font-size:12px;margin-top:4px">${e.message}</div>
-       </div>`;
+            `<div class="empty">Не удалось загрузить витрину.<br>${error.message}</div>`;
         }
       }
 
-      // ── STATUS HELPERS ────────────────────────────────────
-      function getStatus(b) {
-        if (!b.admin_visible) return "hidden";
-        if (b.stock_qty > 0) return "available";
-        return "order";
-      }
+      let sheetTouchX = 0;
+      let sheetTouchY = 0;
 
-      function statusLabel(s) {
-        if (s === "available") return "✅ В наличии";
-        if (s === "order") return "🕐 На заказ";
-        return "❌ Недоступен";
-      }
+      document.getElementById("sheetMedia").addEventListener(
+        "touchstart",
+        (event) => {
+          sheetTouchX = event.touches[0].clientX;
+        },
+        { passive: true },
+      );
 
-      function statusClass(s) {
-        if (s === "available") return "status-available";
-        if (s === "order") return "status-order";
-        return "status-hidden";
-      }
+      document.getElementById("sheetMedia").addEventListener(
+        "touchend",
+        (event) => {
+          const dx = event.changedTouches[0].clientX - sheetTouchX;
+          if (Math.abs(dx) > 42 && slides.length > 1) {
+            slideIndex =
+              (slideIndex + (dx < 0 ? 1 : -1) + slides.length) % slides.length;
+            updateSlide();
+          }
+        },
+        { passive: true },
+      );
 
-      // ── SORT ─────────────────────────────────────────────
-      function sortOrder(s) {
-        if (s === "available") return 0;
-        if (s === "order") return 1;
-        return 2;
-      }
+      document.getElementById("sheet").addEventListener(
+        "touchstart",
+        (event) => {
+          sheetTouchY = event.touches[0].clientY;
+        },
+        { passive: true },
+      );
 
-      // ── RENDER CATALOG ────────────────────────────────────
-      function renderCatalog() {
-        const cat = document.getElementById("catalog");
+      document.getElementById("sheet").addEventListener(
+        "touchend",
+        (event) => {
+          const dy = event.changedTouches[0].clientY - sheetTouchY;
+          const top = document.getElementById("sheetScroll").scrollTop;
+          if (dy > 80 && top <= 0) closeSheet();
+        },
+        { passive: true },
+      );
 
-        let list = bouquets.map((b, i) => ({
-          ...b,
-          _i: i,
-          _status: getStatus(b),
-        }));
-
-        if (currentFilter === "available")
-          list = list.filter((b) => b._status === "available");
-        if (currentFilter === "order")
-          list = list.filter((b) => b._status === "order");
-
-        list.sort((a, b) => sortOrder(a._status) - sortOrder(b._status));
-
-        if (!list.length) {
-          cat.innerHTML = `<div class="empty"><div class="empty-icon">🌿</div><div>Букеты не найдены</div></div>`;
-          return;
-        }
-
-        cat.innerHTML = list.map((b) => cardHTML(b)).join("");
-      }
-
-      function cardHTML(b) {
-        const s = b._status;
-        const gr = getGradient(b._i);
-        const dimmed = s === "hidden" ? "dimmed" : "";
-
-        const firstMedia = media.find(
-          (m) => m.bouquet_id === b.id && m.type !== "video",
-        );
-        const imgHTML = firstMedia
-          ? `<img class="card-img" src="${firstMedia.url}" alt="${b.name}" loading="lazy"
-         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <div class="card-img-placeholder" style="display:none;background:linear-gradient(135deg,${gr[0]},${gr[1]})">${gr[2]}</div>`
-          : `<div class="card-img-placeholder" style="background:linear-gradient(135deg,${gr[0]},${gr[1]})">${gr[2]}</div>`;
-
-        return `
-  <div class="card ${dimmed}" onclick="openSheet('${b.id}')">
-    ${imgHTML}
-    <div class="card-body">
-      <div class="card-status ${statusClass(s)}">${statusLabel(s)}</div>
-      <div class="card-name">${b.name}</div>
-      <div class="card-price">${Number(b.price).toLocaleString("ru-RU")} ₽</div>
-    </div>
-  </div>`;
-      }
-
-      // ── FILTERS ───────────────────────────────────────────
-      document.querySelectorAll(".tab").forEach((tab) => {
-        tab.addEventListener("click", () => {
-          document
-            .querySelectorAll(".tab")
-            .forEach((t) => t.classList.remove("active"));
-          tab.classList.add("active");
-          currentFilter = tab.dataset.filter;
-          renderCatalog();
+      document.getElementById("enterBtn").addEventListener("click", () => {
+        document.getElementById("welcomeScreen").classList.add("hidden");
+        document.getElementById("mainScreen").classList.remove("hidden");
+        document.getElementById("bottomNav").classList.remove("hidden");
+        requestAnimationFrame(() => {
+          document.getElementById("mainScreen").classList.add("open");
         });
       });
 
-      // ── OPEN SHEET ────────────────────────────────────────
-      function openSheet(id) {
-        const b = bouquets.find((x) => x.id === id);
-        if (!b) return;
-        currentBouquet = b;
-
-        const s = getStatus(b);
-        const gr = getGradient(bouquets.indexOf(b));
-
-        // Медиа слайды
-        const bMedia = media.filter((m) => m.bouquet_id === id);
-        carouselSlides = bMedia.length
-          ? bMedia
-          : [
-              {
-                type: "placeholder",
-                emoji: gr[2],
-                color1: gr[0],
-                color2: gr[1],
-              },
-              {
-                type: "placeholder",
-                emoji: gr[2],
-                color1: gr[1],
-                color2: gr[0],
-              },
-              {
-                type: "placeholder",
-                emoji: gr[2],
-                color1: gr[0],
-                color2: gr[1],
-              },
-            ];
-
-        carouselIndex = 0;
-        renderCarousel();
-
-        // Инфо
-        document.getElementById("sheetName").textContent = b.name;
-        document.getElementById("sheetDesc").textContent = b.description || "";
-
-        // Состав
-        const comp = composition.filter((c) => c.bouquet_id === id);
-        const tags = comp
-          .map((c) => {
-            const f = flowers.find((fl) => fl.id === c.flower_id);
-            return f
-              ? `<span class="flower-tag">${f.emoji} ${f.name} × ${c.quantity}</span>`
-              : "";
-          })
-          .join("");
-        document.getElementById("sheetFlowers").innerHTML =
-          tags || '<span class="flower-tag">🌸 Состав уточняйте</span>';
-
-        // Статус и время
-        document.getElementById("sheetStatus").textContent =
-          s === "available"
-            ? `✅ В наличии · ${b.stock_qty} шт.`
-            : s === "order"
-              ? "🕐 На заказ"
-              : "❌ Недоступен";
-
-        document.getElementById("sheetTime").textContent =
-          b.make_time_hours > 0 ? `от ${b.make_time_hours} ч.` : "Готов сейчас";
-
-        document.getElementById("sheetPrice").innerHTML =
-          `${Number(b.price).toLocaleString("ru-RU")} <span class="price-rub">₽</span>`;
-
-        // Кнопка
-        const buyWrap = document.getElementById("buyWrap");
-        const buyBtn = document.getElementById("buyBtn");
-        buyWrap.style.display = "block";
-        if (s === "available") {
-          buyBtn.textContent = "Купить";
-          buyBtn.disabled = false;
-        } else if (s === "order") {
-          buyBtn.textContent = "Заказать";
-          buyBtn.disabled = false;
-        } else {
-          buyBtn.textContent = "Недоступен";
-          buyBtn.disabled = true;
-        }
-
-        document.getElementById("sheetScroll").scrollTop = 0;
-        document.getElementById("overlay").classList.add("open");
-        document.getElementById("sheet").classList.add("open");
-      }
-
-      function closeSheet() {
-        document.getElementById("overlay").classList.remove("open");
-        document.getElementById("sheet").classList.remove("open");
-        document.getElementById("buyWrap").style.display = "none";
-        currentBouquet = null;
-      }
-
-      // ── CAROUSEL ──────────────────────────────────────────
-      function renderCarousel() {
-        const track = document.getElementById("carouselTrack");
-        const dots = document.getElementById("carouselDots");
-
-        track.innerHTML = carouselSlides
-          .map((slide) => {
-            if (slide.type === "placeholder") {
-              return `<div class="carousel-slide" style="background:linear-gradient(135deg,${slide.color1},${slide.color2})">${slide.emoji}</div>`;
-            }
-            if (slide.type === "video") {
-              return `<div class="carousel-slide" style="background:#111">
-        <video src="${slide.url}" autoplay muted loop playsinline style="max-width:100%;max-height:100%;"></video>
-      </div>`;
-            }
-            return `<div class="carousel-slide">
-      <img src="${slide.url}" alt="" onerror="this.parentElement.innerHTML='🌸'">
-    </div>`;
-          })
-          .join("");
-
-        dots.innerHTML = carouselSlides
-          .map((_, i) => `<div class="dot ${i === 0 ? "active" : ""}"></div>`)
-          .join("");
-
-        updateCarousel();
-      }
-
-      function slideCarousel(dir) {
-        carouselIndex =
-          (carouselIndex + dir + carouselSlides.length) % carouselSlides.length;
-        updateCarousel();
-      }
-
-      function updateCarousel() {
-        document.getElementById("carouselTrack").style.transform =
-          `translateX(-${carouselIndex * 100}%)`;
-        document
-          .querySelectorAll(".dot")
-          .forEach((d, i) => d.classList.toggle("active", i === carouselIndex));
-      }
-
-      // Свайп карусели
-      let touchStartX = 0;
-      document.getElementById("carousel").addEventListener(
-        "touchstart",
-        (e) => {
-          touchStartX = e.touches[0].clientX;
-        },
-        { passive: true },
-      );
-      document.getElementById("carousel").addEventListener(
-        "touchend",
-        (e) => {
-          const dx = e.changedTouches[0].clientX - touchStartX;
-          if (Math.abs(dx) > 40) slideCarousel(dx < 0 ? 1 : -1);
-        },
-        { passive: true },
-      );
-
-      // Свайп вниз для закрытия шторки
-      let sheetTouchY = 0;
-      const sheet = document.getElementById("sheet");
-      sheet.addEventListener(
-        "touchstart",
-        (e) => {
-          sheetTouchY = e.touches[0].clientY;
-        },
-        { passive: true },
-      );
-      sheet.addEventListener(
-        "touchend",
-        (e) => {
-          const dy = e.changedTouches[0].clientY - sheetTouchY;
-          const scroll = document.getElementById("sheetScroll").scrollTop;
-          if (dy > 80 && scroll <= 0) closeSheet();
-        },
-        { passive: true },
-      );
-
-      // ── BUY ───────────────────────────────────────────────
-      function handleBuy() {
-        if (!currentBouquet) return;
-        const s = getStatus(currentBouquet);
-
-        // Заглушка — потом ЮKassa
-        if (tg) {
-          tg.showPopup({
-            title: s === "available" ? "💳 Оплата" : "📋 Заказ",
-            message: `${currentBouquet.name}\n${Number(currentBouquet.price).toLocaleString("ru-RU")} ₽\n\n⚙️ Оплата в разработке`,
-            buttons: [{ type: "ok", text: "Понятно" }],
-          });
-        } else {
-          alert(
-            `${currentBouquet.name} — ${currentBouquet.price} ₽\n⚙️ Оплата в разработке`,
-          );
-        }
-      }
-
-      // ── INIT ──────────────────────────────────────────────
+      setupNavigation();
+      updateCounters();
       loadData();
     </script>
   </body>

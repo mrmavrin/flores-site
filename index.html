@@ -323,8 +323,8 @@
         background: linear-gradient(130deg, var(--soft-green), #7e9473);
         color: #f7f5ef;
         border-radius: 999px;
-        padding: 13px 24px;
-        font-size: 16px;
+        padding: 15px 30px;
+        font-size: 18px;
         font-weight: 600;
         line-height: 1;
         cursor: pointer;
@@ -804,6 +804,7 @@
       }
 
       .sheet {
+        --sheet-media-progress: 0;
         position: fixed;
         left: 0;
         right: 0;
@@ -849,13 +850,24 @@
       .sheet-media {
         border-radius: 0;
         overflow: hidden;
-        width: 100%;
+        width: calc(100% - (100% - 112px) * var(--sheet-media-progress));
+        margin: 0 auto;
         aspect-ratio: 1 / 1;
         flex-shrink: 0;
         background: #f2ebe4;
         position: relative;
         transform: translateZ(0);
         backface-visibility: hidden;
+        border-radius: calc(18px * var(--sheet-media-progress));
+        transition:
+          width 0.18s ease,
+          border-radius 0.18s ease;
+      }
+
+      .sheet.media-compact .sheet-carousel-btn,
+      .sheet.media-compact .sheet-dots {
+        opacity: 0;
+        pointer-events: none;
       }
 
       .sheet-media.media-image {
@@ -1154,12 +1166,6 @@
       .main-cta-outline:disabled {
         border-color: #d6d7cf;
         color: #7d8077;
-      }
-
-      .sheet-btn-row {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
       }
 
       .service-card {
@@ -1525,7 +1531,7 @@
             <button class="welcome-btn" id="enterBtn">
               Понимаю и согласен(а), продолжить
             </button>
-            <p class="welcome-version">версия 0.3.8</p>
+            <p class="welcome-version">версия 0.2.8</p>
           </div>
         </article>
       </section>
@@ -1686,8 +1692,6 @@
             <span id="qtyValue">1</span>
             <button type="button" onclick="changeQty(1)">+</button>
           </div>
-        </div>
-        <div class="sheet-btn-row">
           <button
             class="main-cta-outline"
             id="ctaBtn"
@@ -1695,9 +1699,6 @@
             onclick="handleAction()"
           >
             Добавить в корзину
-          </button>
-          <button class="main-cta" type="button" onclick="buyNow()">
-            Купить
           </button>
         </div>
       </div>
@@ -2336,6 +2337,10 @@
         document.getElementById("ctaBtn").textContent = "Добавить в корзину";
         document.getElementById("ctaBtn").disabled = false;
 
+        const scroll = document.getElementById("sheetScroll");
+        scroll.scrollTop = 0;
+        updateSheetMediaState();
+
         lockPageScroll();
         document.getElementById("overlay").classList.add("open");
         document.getElementById("sheet").classList.add("open");
@@ -2550,6 +2555,8 @@
       function closeSheet() {
         document.getElementById("overlay").classList.remove("open");
         document.getElementById("sheet").classList.remove("open");
+        document.getElementById("sheetScroll").scrollTop = 0;
+        updateSheetMediaState();
         unlockPageScroll();
         currentBouquet = null;
       }
@@ -2591,20 +2598,6 @@
 
         closeSheet();
         if (currentView === "cart") renderCartView();
-      }
-
-      function buyNow() {
-        if (!currentBouquet) return;
-
-        const cartKey = normalizeId(currentBouquet.id);
-        cartMap.set(cartKey, (cartMap.get(cartKey) || 0) + currentQty);
-        recomputeCartItems();
-        updateCounters();
-
-        const price = toNumber(currentBouquet.price) * currentQty;
-        closeSheet();
-        if (currentView === "cart") renderCartView();
-        openCheckout(price);
       }
 
       function syncNav() {
@@ -2667,6 +2660,18 @@
       let sheetTouchY = 0;
       let sheetPointerX = 0;
       let sheetPointerDown = false;
+
+      function updateSheetMediaState() {
+        const sheet = document.getElementById("sheet");
+        const top = document.getElementById("sheetScroll").scrollTop;
+        const progress = Math.max(0, Math.min(top / 220, 1));
+        sheet.style.setProperty("--sheet-media-progress", progress.toFixed(3));
+        sheet.classList.toggle("media-compact", progress > 0.88);
+      }
+
+      document
+        .getElementById("sheetScroll")
+        .addEventListener("scroll", updateSheetMediaState, { passive: true });
 
       document.getElementById("sheetMedia").addEventListener(
         "touchstart",

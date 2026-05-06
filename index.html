@@ -428,6 +428,15 @@
         font-size: 15px;
       }
 
+      .card-desc {
+        margin-top: 3px;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
       .card-tagline {
         margin-top: 4px;
         color: var(--muted);
@@ -1751,6 +1760,7 @@
           </div>
           <div class="card-body">
             <h3 class="card-title">${item.name}</h3>
+            ${item.descriptionmini ? `<div class="card-desc">${String(item.descriptionmini).slice(0, 28)}</div>` : ""}
             <div class="card-price">${toNumber(item.price).toLocaleString("ru-RU")} ₽</div>
           </div>
         </article>`;
@@ -1988,10 +1998,7 @@
         const fav = favorites.has(target);
         document.getElementById("sheetFavBtn").textContent = fav ? "❤" : "♡";
 
-        document.getElementById("ctaBtn").textContent =
-          statusCode(bouquet) === "available"
-            ? "Добавить в корзину"
-            : "Заказать";
+        document.getElementById("ctaBtn").textContent = "Добавить в корзину";
         document.getElementById("ctaBtn").disabled = false;
 
         document.getElementById("overlay").classList.add("open");
@@ -2237,40 +2244,10 @@
       function handleAction() {
         if (!currentBouquet) return;
 
-        if (currentBouquet.id === "service_custom") {
-          if (tg) {
-            tg.showPopup({
-              title: "Букет на заказ",
-              message:
-                "Опишите повод и бюджет в чате бота, и мы соберем персональную композицию.",
-              buttons: [{ type: "ok", text: "Понятно" }],
-            });
-          } else {
-            alert(
-              "Букет на заказ: укажите повод и бюджет, и мы предложим варианты.",
-            );
-          }
-          closeSheet();
-          return;
-        }
-
         const cartKey = normalizeId(currentBouquet.id);
         cartMap.set(cartKey, (cartMap.get(cartKey) || 0) + currentQty);
         cartItems += currentQty;
         updateCounters();
-
-        const amount = toNumber(currentBouquet.price) * currentQty;
-        const message = `${currentBouquet.name}\n${currentQty} шт.\nСумма: ${amount.toLocaleString("ru-RU")} ₽\n\nОплата через ЮKassa скоро будет подключена.`;
-
-        if (tg) {
-          tg.showPopup({
-            title: "Оплата временно недоступна",
-            message,
-            buttons: [{ type: "ok", text: "Отлично" }],
-          });
-        } else {
-          alert(`Оплата временно недоступна\n\n${message}`);
-        }
 
         closeSheet();
         if (currentView === "cart") renderCartView();

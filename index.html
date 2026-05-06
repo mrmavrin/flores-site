@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Bloome | Цветочная витрина</title>
+    <title>Bloomé | Цветочная витрина</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -238,6 +238,8 @@
         text-transform: lowercase;
         letter-spacing: 0.02em;
         color: rgba(100, 80, 70, 0.5);
+        text-align: center;
+        width: 100%;
       }
 
       .shell {
@@ -847,7 +849,9 @@
       .sheet-media {
         border-radius: 0;
         overflow: hidden;
+        width: 100%;
         aspect-ratio: 1 / 1;
+        flex-shrink: 0;
         background: #f2ebe4;
         position: relative;
         transform: translateZ(0);
@@ -1125,6 +1129,37 @@
       .main-cta:disabled {
         background: #d6d7cf;
         color: #7d8077;
+      }
+
+      .main-cta-outline {
+        flex: 1;
+        border: 2.5px solid var(--soft-green);
+        border-radius: 999px;
+        background: transparent;
+        color: var(--soft-green);
+        font-size: 16px;
+        font-weight: 600;
+        padding: 14px 18px;
+        cursor: pointer;
+        transition:
+          transform 0.14s ease,
+          opacity 0.14s ease;
+      }
+
+      .main-cta-outline:active {
+        transform: scale(0.96);
+        opacity: 0.75;
+      }
+
+      .main-cta-outline:disabled {
+        border-color: #d6d7cf;
+        color: #7d8077;
+      }
+
+      .sheet-btn-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
       }
 
       .service-card {
@@ -1474,7 +1509,7 @@
           <span class="welcome-flower f-3">✿</span>
 
           <div class="welcome-copy">
-            <h1 class="brand">Bloome</h1>
+            <h1 class="brand">Bloomé</h1>
             <div class="brand-note">цветы с душой</div>
             <p class="welcome-text">
               Авторские букеты<br />для особенных моментов
@@ -1499,7 +1534,7 @@
         <header class="header">
           <div class="brand-row">
             <div class="brand-block">
-              <h1>Bloome</h1>
+              <h1>Bloomé</h1>
               <p>Онлайн витрина</p>
             </div>
             <div class="header-actions">
@@ -1526,7 +1561,7 @@
           </div>
 
           <section class="hero">
-            <h2>Выберите свой букет<br />с душой <span>♥</span></h2>
+            <h2>Выберите свой букет с душой <span>♥</span></h2>
           </section>
 
           <div class="filters" id="filters"></div>
@@ -1651,13 +1686,18 @@
             <span id="qtyValue">1</span>
             <button type="button" onclick="changeQty(1)">+</button>
           </div>
+        </div>
+        <div class="sheet-btn-row">
           <button
-            class="main-cta"
+            class="main-cta-outline"
             id="ctaBtn"
             type="button"
             onclick="handleAction()"
           >
             Добавить в корзину
+          </button>
+          <button class="main-cta" type="button" onclick="buyNow()">
+            Купить
           </button>
         </div>
       </div>
@@ -2551,6 +2591,20 @@
 
         closeSheet();
         if (currentView === "cart") renderCartView();
+      }
+
+      function buyNow() {
+        if (!currentBouquet) return;
+
+        const cartKey = normalizeId(currentBouquet.id);
+        cartMap.set(cartKey, (cartMap.get(cartKey) || 0) + currentQty);
+        recomputeCartItems();
+        updateCounters();
+
+        const price = toNumber(currentBouquet.price) * currentQty;
+        closeSheet();
+        if (currentView === "cart") renderCartView();
+        openCheckout(price);
       }
 
       function syncNav() {

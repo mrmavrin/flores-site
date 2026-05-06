@@ -266,6 +266,25 @@
         justify-content: center;
       }
 
+      .header-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .top-about-btn {
+        border: 1px solid rgba(169, 184, 159, 0.45);
+        background: #fffaf6;
+        color: #66735f;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+      }
+
       .hero {
         padding: 6px 4px 0;
       }
@@ -493,8 +512,111 @@
         box-shadow: 0 12px 24px rgba(68, 54, 44, 0.14);
         padding: 6px;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
+      }
+
+      .cart-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .cart-line {
+        display: grid;
+        grid-template-columns: 74px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        background: #fffdfb;
+        border: 1px solid #f0e6dc;
+        border-radius: 16px;
+        padding: 8px;
+      }
+
+      .cart-thumb {
+        width: 74px;
+        aspect-ratio: 1 / 1;
+        border-radius: 12px;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        background: #f3ece5;
+      }
+
+      .cart-ph {
+        width: 74px;
+        aspect-ratio: 1 / 1;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+      }
+
+      .cart-name {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 24px;
+        line-height: 0.95;
+      }
+
+      .cart-sub {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #747d72;
+      }
+
+      .cart-price {
+        font-size: 14px;
+        font-weight: 700;
+        color: #4f5a50;
+        text-align: right;
+      }
+
+      .cart-pay-wrap {
+        margin-top: 14px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .cart-pay-btn {
+        width: min(360px, 100%);
+      }
+
+      .delivery-card {
+        border-radius: var(--radius-lg);
+        border: 1px solid #eadfd4;
+        background: #fffcf8;
+        padding: 16px;
+        color: #5f695b;
+        line-height: 1.45;
+      }
+
+      .delivery-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 32px;
+        line-height: 1;
+        color: #425143;
+      }
+
+      .delivery-pill {
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #eef5eb;
+        color: #607256;
+      }
+
+      .delivery-address {
+        margin-top: 12px;
+        padding: 10px;
+        border-radius: 12px;
+        background: #f8f2eb;
+        border: 1px dashed #e3d6ca;
+        font-size: 13px;
       }
 
       .nav-btn {
@@ -588,7 +710,7 @@
       .sheet-media {
         border-radius: 0;
         overflow: hidden;
-        height: min(58dvh, 540px);
+        aspect-ratio: 1 / 1;
         background: #f2ebe4;
         position: relative;
       }
@@ -710,10 +832,6 @@
       }
 
       @media (max-width: 480px) {
-        .sheet-media {
-          height: 52dvh;
-        }
-
         .sheet-carousel-btn {
           width: 32px;
           height: 32px;
@@ -1197,9 +1315,19 @@
               <h1>Bloome</h1>
               <p>Онлайн витрина</p>
             </div>
-            <button class="icon-btn" type="button" aria-label="Корзина">
-              🛍
-            </button>
+            <div class="header-actions">
+              <button
+                class="icon-btn"
+                id="headerCartBtn"
+                type="button"
+                aria-label="Корзина"
+              >
+                🛍
+              </button>
+              <button class="top-about-btn" id="headerAboutBtn" type="button">
+                О нас
+              </button>
+            </div>
           </div>
 
           <section class="hero">
@@ -1243,10 +1371,6 @@
       <button class="nav-btn" data-nav="cart" type="button">
         <span class="nav-icon">🛍</span>
         <span>Корзина <span class="nav-counter" id="cartCount">0</span></span>
-      </button>
-      <button class="nav-btn" data-nav="about" type="button">
-        <span class="nav-icon">i</span>
-        <span>О нас</span>
       </button>
     </nav>
 
@@ -1395,6 +1519,7 @@
       let composition = [];
       let flowers = [];
       let media = [];
+      let settings = [];
       let groupFilters = [{ key: "all", label: "Все букеты" }];
       let currentGroup = "all";
       let currentView = "home";
@@ -1405,6 +1530,7 @@
       let currentQty = 1;
       let slides = [];
       let slideIndex = 0;
+      let defaultPickupAddress = "Адрес магазина уточняется";
 
       function getGradient(i) {
         return GRADIENTS[i % GRADIENTS.length];
@@ -1433,10 +1559,15 @@
       }
 
       function mediaTypeOf(m) {
+        const url = normalize(String(m.url ?? ""));
+        if (
+          /\.(jpg|jpeg|png|webp|gif|bmp|svg|heic|heif|avif)(\?|#|$)/.test(url)
+        )
+          return "image";
+        if (/\.(mp4|webm|mov|m4v)(\?|#|$)/.test(url)) return "video";
+
         const typeRaw = normalize(m.type ?? m.media_type ?? m.kind ?? "");
         if (typeRaw.includes("video") || typeRaw === "vid") return "video";
-        const url = normalize(String(m.url ?? ""));
-        if (/\.(mp4|webm|mov|m4v)(\?|$)/.test(url)) return "video";
         return "image";
       }
 
@@ -1460,6 +1591,15 @@
           });
           return obj;
         });
+      }
+
+      async function fetchSettingsB3() {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent("Настройки")}&tq=${encodeURIComponent("select B limit 1 offset 2")}`;
+        const response = await fetch(url);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47, text.length - 2));
+        const value = json?.table?.rows?.[0]?.c?.[0]?.v;
+        return String(value || "").trim();
       }
 
       function statusCode(b) {
@@ -1640,6 +1780,136 @@
         }
 
         catalog.innerHTML = visible.map((item) => cardTemplate(item)).join("");
+      }
+
+      function updateServiceCardVisibility() {
+        const service = document.getElementById("serviceCard");
+        if (!service) return;
+        const hidden = currentView === "cart" || currentView === "about";
+        service.classList.toggle("hidden", hidden);
+      }
+
+      function updateHeaderMode() {
+        const filters = document.getElementById("filters");
+        if (!filters) return;
+        const hideFilters = currentView === "cart" || currentView === "about";
+        filters.classList.toggle("hidden", hideFilters);
+      }
+
+      function renderCartView() {
+        const catalog = document.getElementById("catalog");
+        if (cartMap.size === 0) {
+          catalog.innerHTML =
+            '<div class="empty">Корзина пока пуста. Выберите букет с душой и добавьте его в один тап.</div>';
+          return;
+        }
+
+        let total = 0;
+        const rows = Array.from(cartMap.entries())
+          .map(([id, qty]) => {
+            const b = bouquets.find((item) => normalizeId(item.id) === id);
+            if (!b) return "";
+            const price = toNumber(b.price);
+            const sum = price * qty;
+            total += sum;
+            const pic = firstImageFor(id);
+            const grad = getGradient(
+              Math.max(
+                0,
+                bouquets.findIndex((item) => normalizeId(item.id) === id),
+              ),
+            );
+            const thumb = pic
+              ? `<img class="cart-thumb" src="${pic.url}" alt="${b.name}" loading="lazy">`
+              : `<div class="cart-ph" style="background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`;
+            return `<article class="cart-line" onclick="openBouquet('${id}')">
+              ${thumb}
+              <div>
+                <div class="cart-name">${b.name}</div>
+                <div class="cart-sub">${qty} шт.</div>
+              </div>
+              <div class="cart-price">${sum.toLocaleString("ru-RU")} ₽</div>
+            </article>`;
+          })
+          .filter(Boolean)
+          .join("");
+
+        catalog.innerHTML = `<div class="cart-list">${rows}</div>
+          <div class="cart-pay-wrap">
+            <button class="main-cta cart-pay-btn" type="button" onclick="openCheckout(${total})">Оплатить</button>
+          </div>`;
+      }
+
+      function getPickupAddressFromSettings() {
+        if (!Array.isArray(settings) || !settings.length) {
+          return defaultPickupAddress;
+        }
+
+        for (const row of settings) {
+          const keys = Object.keys(row || {});
+          for (const key of keys) {
+            const keyNorm = normalize(key);
+            const value = String(row[key] ?? "").trim();
+            if (!value) continue;
+            if (
+              keyNorm.includes("адрес") ||
+              keyNorm.includes("pickup") ||
+              keyNorm.includes("from")
+            ) {
+              return value;
+            }
+            if (normalize(value).includes("ул") && value.length > 6) {
+              return value;
+            }
+          }
+        }
+
+        return defaultPickupAddress;
+      }
+
+      function renderDeliveryView() {
+        const catalog = document.getElementById("catalog");
+        const pickup = getPickupAddressFromSettings();
+        catalog.innerHTML = `<div class="delivery-card">
+          <h3 class="delivery-title">Доставка</h3>
+          <div class="delivery-pill">Яндекс Курьер API</div>
+          <p style="margin-top:12px">Доставку планируем через интеграцию с Яндекс Курьер. После подтверждения заказа менеджер рассчитывает время и стоимость доставки автоматически.</p>
+          <div class="delivery-address"><strong>Точка отправки по умолчанию:</strong><br>${pickup}</div>
+        </div>`;
+      }
+
+      function openCheckout(total) {
+        const amount = toNumber(total);
+        const message = `К оплате: ${amount.toLocaleString("ru-RU")} ₽\n\nОплата через ЮKassa скоро будет подключена.`;
+        if (tg) {
+          tg.showPopup({
+            title: "Оплата",
+            message,
+            buttons: [{ type: "ok", text: "Понятно" }],
+          });
+        } else {
+          alert(message);
+        }
+      }
+
+      function renderCurrentView() {
+        updateServiceCardVisibility();
+        updateHeaderMode();
+        if (currentView === "about") {
+          renderDeliveryView();
+          return;
+        }
+        if (currentView === "cart") {
+          renderCartView();
+          return;
+        }
+        renderCatalog();
+      }
+
+      function setView(view) {
+        currentView = view;
+        syncNav();
+        renderCurrentView();
       }
 
       function compositionOf(id) {
@@ -1946,7 +2216,7 @@
         if (favorites.has(id)) favorites.delete(id);
         else favorites.add(id);
         updateCounters();
-        renderCatalog();
+        renderCurrentView();
       }
 
       function toggleCurrentFavorite() {
@@ -2003,6 +2273,7 @@
         }
 
         closeSheet();
+        if (currentView === "cart") renderCartView();
       }
 
       function syncNav() {
@@ -2021,37 +2292,38 @@
       function setupNavigation() {
         document.querySelectorAll(".nav-btn").forEach((btn) => {
           btn.addEventListener("click", () => {
-            currentView = btn.dataset.nav;
-            syncNav();
-
-            if (currentView === "about") {
-              document.getElementById("catalog").innerHTML =
-                '<div class="empty"><strong>Bloome</strong><br>Доставка по городу, свежая сборка в день заказа, бережная упаковка и открытка в подарок.</div>';
-              return;
-            }
-
-            if (currentView === "cart" && cartItems === 0) {
-              document.getElementById("catalog").innerHTML =
-                '<div class="empty">Корзина пока пуста. Выберите букет с душой и добавьте его в один тап.</div>';
-              return;
-            }
-
-            renderCatalog();
+            setView(btn.dataset.nav);
           });
         });
+
+        document
+          .getElementById("headerCartBtn")
+          .addEventListener("click", () => setView("cart"));
+        document
+          .getElementById("headerAboutBtn")
+          .addEventListener("click", () => setView("about"));
       }
 
       async function loadData() {
         try {
-          [bouquets, composition, flowers, media] = await Promise.all([
+          [
+            bouquets,
+            composition,
+            flowers,
+            media,
+            settings,
+            defaultPickupAddress,
+          ] = await Promise.all([
             fetchSheet("Букеты"),
             fetchSheet("Состав"),
             fetchSheet("Цветы"),
             fetchSheet("Медиа"),
+            fetchSheet("Настройки").catch(() => []),
+            fetchSettingsB3().catch(() => "Адрес магазина уточняется"),
           ]);
           buildGroupFilters();
           buildFilters();
-          renderCatalog();
+          renderCurrentView();
         } catch (error) {
           document.getElementById("catalog").innerHTML =
             `<div class="empty">Не удалось загрузить витрину.<br>${error.message}</div>`;

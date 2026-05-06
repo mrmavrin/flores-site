@@ -234,7 +234,7 @@
 
       .welcome-version {
         margin-top: 8px;
-        font-size: 10px;
+        font-size: 9px;
         text-transform: lowercase;
         letter-spacing: 0.02em;
         color: rgba(100, 80, 70, 0.5);
@@ -836,6 +836,8 @@
       }
 
       .sheet-scroll {
+        flex: 1;
+        min-height: 0;
         overflow-y: auto;
         padding: 0 0 130px;
         -webkit-overflow-scrolling: touch;
@@ -1488,7 +1490,7 @@
             <button class="welcome-btn" id="enterBtn">
               Понимаю и согласен(а), продолжить
             </button>
-            <p class="welcome-version">версия 0.2.7</p>
+            <p class="welcome-version">версия 0.3.8</p>
           </div>
         </article>
       </section>
@@ -1582,47 +1584,42 @@
 
     <section class="sheet" id="sheet">
       <div class="sheet-handle"></div>
-      <div class="sheet-scroll" id="sheetScroll">
-        <div class="sheet-media" id="sheetMedia">
-          <div class="sheet-track" id="sheetTrack"></div>
-          <button
-            class="sheet-carousel-btn prev"
-            id="sheetPrevBtn"
-            type="button"
-            onclick="slideSheet(-1)"
-            aria-label="Предыдущий слайд"
-          >
-            ‹
+      <div class="sheet-media" id="sheetMedia">
+        <div class="sheet-track" id="sheetTrack"></div>
+        <button
+          class="sheet-carousel-btn prev"
+          id="sheetPrevBtn"
+          type="button"
+          onclick="slideSheet(-1)"
+          aria-label="Предыдущий слайд"
+        >
+          ‹
+        </button>
+        <button
+          class="sheet-carousel-btn next"
+          id="sheetNextBtn"
+          type="button"
+          onclick="slideSheet(1)"
+          aria-label="Следующий слайд"
+        >
+          ›
+        </button>
+        <div class="sheet-top-controls">
+          <button class="sheet-round-btn" type="button" onclick="closeSheet()">
+            ←
           </button>
           <button
-            class="sheet-carousel-btn next"
-            id="sheetNextBtn"
+            class="sheet-round-btn"
             type="button"
-            onclick="slideSheet(1)"
-            aria-label="Следующий слайд"
+            id="sheetFavBtn"
+            onclick="toggleCurrentFavorite()"
           >
-            ›
+            ♡
           </button>
-          <div class="sheet-top-controls">
-            <button
-              class="sheet-round-btn"
-              type="button"
-              onclick="closeSheet()"
-            >
-              ←
-            </button>
-            <button
-              class="sheet-round-btn"
-              type="button"
-              id="sheetFavBtn"
-              onclick="toggleCurrentFavorite()"
-            >
-              ♡
-            </button>
-          </div>
-          <div class="sheet-dots" id="sheetDots"></div>
         </div>
-
+        <div class="sheet-dots" id="sheetDots"></div>
+      </div>
+      <div class="sheet-scroll" id="sheetScroll">
         <div class="sheet-info">
           <h3 class="sheet-name" id="sheetName"></h3>
           <div class="sheet-price" id="sheetPrice"></div>

@@ -56,6 +56,14 @@
         -webkit-tap-highlight-color: transparent;
       }
 
+      body.modal-lock {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+        overflow: hidden;
+      }
+
       body::before,
       body::after {
         content: "";
@@ -208,6 +216,15 @@
         filter: brightness(0.98);
       }
 
+      .welcome-disclaimer {
+        font-size: 11.5px;
+        color: rgba(100, 80, 70, 0.55);
+        line-height: 1.55;
+        text-align: center;
+        padding: 0 4px;
+        margin-bottom: 10px;
+      }
+
       .shell {
         min-height: 100dvh;
         padding-bottom: 112px;
@@ -266,11 +283,34 @@
         justify-content: center;
       }
 
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
       .header-actions {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: center;
         gap: 6px;
+      }
+
+      .header-pay-btn {
+        border: 1px solid rgba(169, 184, 159, 0.45);
+        background: #fffaf6;
+        color: #66735f;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
       }
 
       .top-about-btn {
@@ -424,6 +464,8 @@
 
       .card-price {
         margin-top: 5px;
+        font-family: "Manrope", sans-serif;
+        font-variant-numeric: tabular-nums;
         font-weight: 600;
         font-size: 15px;
       }
@@ -580,6 +622,44 @@
         text-align: right;
       }
 
+      .cart-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .cart-qty {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e8dbcf;
+        border-radius: 999px;
+        background: #fffaf6;
+        padding: 2px 8px;
+      }
+
+      .cart-qty button {
+        border: none;
+        background: transparent;
+        color: #687062;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .cart-remove {
+        border: 1px solid #eadfd4;
+        background: #fff;
+        border-radius: 999px;
+        width: 24px;
+        height: 24px;
+        color: #8f9688;
+        font-size: 14px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
       .cart-pay-wrap {
         margin-top: 14px;
         display: flex;
@@ -591,6 +671,8 @@
       }
 
       .delivery-card {
+        grid-column: 1 / -1;
+        width: 100%;
         border-radius: var(--radius-lg);
         border: 1px solid #eadfd4;
         background: #fffcf8;
@@ -735,6 +817,8 @@
       .sheet-scroll {
         overflow-y: auto;
         padding: 0 0 130px;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
       }
 
       .sheet-media {
@@ -743,6 +827,8 @@
         aspect-ratio: 1 / 1;
         background: #f2ebe4;
         position: relative;
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .sheet-media.media-image {
@@ -758,6 +844,9 @@
         width: 100%;
         height: 100%;
         transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.24, 1);
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .slide {
@@ -768,12 +857,16 @@
         justify-content: center;
         font-size: 84px;
         flex-shrink: 0;
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .slide img,
       .slide video {
         width: 100%;
         height: 100%;
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .slide img {
@@ -1052,72 +1145,6 @@
         pointer-events: all;
       }
 
-      /* ── ABOUT SHEET ───────────────────────────── */
-      .about-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 59;
-        background: rgba(0, 0, 0, 0.35);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.28s;
-      }
-      .about-overlay.open {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .about-sheet {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 60;
-        background: #fcf6f1;
-        border-radius: 28px 28px 0 0;
-        transform: translateY(102%);
-        transition: transform 0.34s cubic-bezier(0.2, 0.88, 0.24, 1.08);
-        max-height: 80dvh;
-        display: flex;
-        flex-direction: column;
-      }
-      .about-sheet.open {
-        transform: translateY(0);
-      }
-
-      .about-sheet-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 14px 16px 10px;
-        border-bottom: 1px solid #eadfd4;
-        flex-shrink: 0;
-      }
-      .about-sheet-back {
-        border: none;
-        background: #f0ebe5;
-        border-radius: 50%;
-        width: 34px;
-        height: 34px;
-        font-size: 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .about-sheet-title {
-        font-family: "Cormorant Garamond", serif;
-        font-size: 26px;
-        font-weight: 600;
-        color: #425143;
-      }
-      .about-sheet-scroll {
-        overflow-y: auto;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
       .about-row {
         display: flex;
         gap: 12px;
@@ -1127,6 +1154,11 @@
         border-radius: 14px;
         border: 1px solid #eadfd4;
       }
+
+      .about-row + .about-row {
+        margin-top: 10px;
+      }
+
       .about-label {
         font-size: 11px;
         color: #8a9087;
@@ -1426,7 +1458,12 @@
             </p>
           </div>
 
-          <button class="welcome-btn" id="enterBtn">Войти в витрину</button>
+          <p class="welcome-disclaimer">
+            Каждый букет собирается вручную, поэтому возможны лёгкие отличия от
+            фото на витрине. Это живая композиция в выбранной стилистике: мы
+            бережно сохраняем идею, цветовую гамму и характер букета.
+          </p>
+          <button class="welcome-btn" id="enterBtn">Начать создавать</button>
         </article>
       </section>
 
@@ -1439,12 +1476,23 @@
             </div>
             <div class="header-actions">
               <button
+                class="header-pay-btn hidden"
+                id="headerPayBtn"
+                type="button"
+              >
+                Оплатить
+              </button>
+              <button
                 class="icon-btn"
                 id="headerInfoBtn"
                 type="button"
                 aria-label="Информация"
               >
-                ℹ
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M12 10v6"></path>
+                  <path d="M12 7.2h.01"></path>
+                </svg>
               </button>
             </div>
           </div>
@@ -1592,17 +1640,6 @@
       </div>
     </section>
 
-    <div class="about-overlay" id="aboutOverlay" onclick="closeAbout()"></div>
-    <section class="about-sheet" id="aboutSheet">
-      <div class="about-sheet-header">
-        <button class="about-sheet-back" type="button" onclick="closeAbout()">
-          ←
-        </button>
-        <span class="about-sheet-title">О нас</span>
-      </div>
-      <div class="about-sheet-scroll" id="aboutSheetScroll"></div>
-    </section>
-
     <div
       class="builder-overlay"
       id="builderOverlay"
@@ -1672,6 +1709,22 @@
       let slides = [];
       let slideIndex = 0;
       let defaultPickupAddress = "Адрес магазина уточняется";
+      let cartTotal = 0;
+      let lockedScrollY = 0;
+
+      function lockPageScroll() {
+        if (document.body.classList.contains("modal-lock")) return;
+        lockedScrollY = window.scrollY || window.pageYOffset || 0;
+        document.body.style.top = `-${lockedScrollY}px`;
+        document.body.classList.add("modal-lock");
+      }
+
+      function unlockPageScroll() {
+        if (!document.body.classList.contains("modal-lock")) return;
+        document.body.classList.remove("modal-lock");
+        document.body.style.top = "";
+        window.scrollTo(0, lockedScrollY);
+      }
 
       function getGradient(i) {
         return GRADIENTS[i % GRADIENTS.length];
@@ -1735,7 +1788,7 @@
       }
 
       async function fetchSettingsB3() {
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent("Настройки")}&tq=${encodeURIComponent("select B limit 1 offset 2")}`;
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=0&sheet=${encodeURIComponent("Настройки")}&range=${encodeURIComponent("B3")}&tq=${encodeURIComponent("select *")}`;
         const response = await fetch(url);
         const text = await response.text();
         const json = JSON.parse(text.substring(47, text.length - 2));
@@ -1756,28 +1809,6 @@
       }
 
       let aboutRows = [];
-
-      function openAbout() {
-        const scroll = document.getElementById("aboutSheetScroll");
-        scroll.innerHTML =
-          aboutRows
-            .filter((r) => r.label || r.value)
-            .map(
-              (r) => `<div class="about-row">
-            <div class="about-label">${r.label}</div>
-            <div class="about-value">${r.value}</div>
-          </div>`,
-            )
-            .join("") ||
-          '<div style="color:#8a9087;font-size:14px">Информация не заполнена</div>';
-        document.getElementById("aboutOverlay").classList.add("open");
-        document.getElementById("aboutSheet").classList.add("open");
-      }
-
-      function closeAbout() {
-        document.getElementById("aboutOverlay").classList.remove("open");
-        document.getElementById("aboutSheet").classList.remove("open");
-      }
 
       function statusCode(b) {
         if (!b.admin_visible) return "hidden";
@@ -1983,8 +2014,10 @@
       function renderCartView() {
         const catalog = document.getElementById("catalog");
         if (cartMap.size === 0) {
+          cartTotal = 0;
           catalog.innerHTML =
             '<div class="empty">Корзина пока пуста. Выберите букет с душой и добавьте его в один тап.</div>';
+          updateHeaderPayButton();
           return;
         }
 
@@ -2012,16 +2045,57 @@
                 <div class="cart-name">${b.name}</div>
                 <div class="cart-sub">${qty} шт.</div>
               </div>
-              <div class="cart-price">${sum.toLocaleString("ru-RU")} ₽</div>
+              <div class="cart-right" onclick="event.stopPropagation()">
+                <div class="cart-price">${sum.toLocaleString("ru-RU")} ₽</div>
+                <div class="cart-qty">
+                  <button type="button" onclick="changeCartQty('${id}', -1)">−</button>
+                  <span>${qty}</span>
+                  <button type="button" onclick="changeCartQty('${id}', 1)">+</button>
+                </div>
+                <button class="cart-remove" type="button" onclick="removeCartItem('${id}')">×</button>
+              </div>
             </article>`;
           })
           .filter(Boolean)
           .join("");
 
+        cartTotal = total;
         catalog.innerHTML = `<div class="cart-list">${rows}</div>
           <div class="cart-pay-wrap">
             <button class="main-cta cart-pay-btn" type="button" onclick="openCheckout(${total})">Оплатить</button>
           </div>`;
+        updateHeaderPayButton();
+      }
+
+      function updateHeaderPayButton() {
+        const btn = document.getElementById("headerPayBtn");
+        if (!btn) return;
+        const shouldShow = currentView === "cart" && cartMap.size > 0;
+        btn.classList.toggle("hidden", !shouldShow);
+      }
+
+      function recomputeCartItems() {
+        cartItems = Array.from(cartMap.values()).reduce(
+          (sum, qty) => sum + qty,
+          0,
+        );
+      }
+
+      function changeCartQty(id, delta) {
+        const key = normalizeId(id);
+        const next = (cartMap.get(key) || 0) + delta;
+        if (next <= 0) cartMap.delete(key);
+        else cartMap.set(key, next);
+        recomputeCartItems();
+        updateCounters();
+        if (currentView === "cart") renderCartView();
+      }
+
+      function removeCartItem(id) {
+        cartMap.delete(normalizeId(id));
+        recomputeCartItems();
+        updateCounters();
+        if (currentView === "cart") renderCartView();
       }
 
       function getPickupAddressFromSettings() {
@@ -2053,7 +2127,7 @@
 
       function renderDeliveryView() {
         const catalog = document.getElementById("catalog");
-        const pickup = getPickupAddressFromSettings();
+        const pickup = defaultPickupAddress || "Адрес магазина уточняется";
         catalog.innerHTML = `<div class="delivery-card">
           <h3 class="delivery-title">Доставка</h3>
           <div class="delivery-pill">Яндекс Курьер API</div>
@@ -2099,10 +2173,12 @@
         updateHeaderMode();
         if (currentView === "info") {
           renderInfoView();
+          updateHeaderPayButton();
           return;
         }
         if (currentView === "about") {
           renderDeliveryView();
+          updateHeaderPayButton();
           return;
         }
         if (currentView === "cart") {
@@ -2110,6 +2186,7 @@
           return;
         }
         renderCatalog();
+        updateHeaderPayButton();
       }
 
       function setView(view) {
@@ -2197,6 +2274,7 @@
         document.getElementById("ctaBtn").textContent = "Добавить в корзину";
         document.getElementById("ctaBtn").disabled = false;
 
+        lockPageScroll();
         document.getElementById("overlay").classList.add("open");
         document.getElementById("sheet").classList.add("open");
       }
@@ -2396,7 +2474,7 @@
 
       function updateSlide() {
         document.getElementById("sheetTrack").style.transform =
-          `translateX(-${slideIndex * 100}%)`;
+          `translate3d(-${slideIndex * 100}%, 0, 0)`;
         document
           .querySelectorAll(".dot")
           .forEach((dot, i) =>
@@ -2407,6 +2485,7 @@
       function closeSheet() {
         document.getElementById("overlay").classList.remove("open");
         document.getElementById("sheet").classList.remove("open");
+        unlockPageScroll();
         currentBouquet = null;
       }
 
@@ -2442,7 +2521,7 @@
 
         const cartKey = normalizeId(currentBouquet.id);
         cartMap.set(cartKey, (cartMap.get(cartKey) || 0) + currentQty);
-        cartItems += currentQty;
+        recomputeCartItems();
         updateCounters();
 
         closeSheet();
@@ -2472,6 +2551,9 @@
         document
           .getElementById("headerInfoBtn")
           .addEventListener("click", () => setView("info"));
+        document
+          .getElementById("headerPayBtn")
+          .addEventListener("click", () => openCheckout(cartTotal));
       }
 
       async function loadData() {

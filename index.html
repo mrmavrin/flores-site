@@ -171,6 +171,13 @@
         text-align: center;
       }
 
+      .welcome-footer {
+        margin-top: auto;
+        width: 100%;
+        display: grid;
+        gap: 10px;
+      }
+
       .brand {
         font-family: "Cormorant Garamond", serif;
         font-size: clamp(58px, 11vw, 74px);
@@ -227,7 +234,7 @@
 
       .welcome-version {
         margin-top: 8px;
-        font-size: 11px;
+        font-size: 10px;
         text-transform: lowercase;
         letter-spacing: 0.02em;
         color: rgba(100, 80, 70, 0.5);
@@ -310,15 +317,24 @@
       }
 
       .header-pay-btn {
-        border: 1px solid rgba(169, 184, 159, 0.45);
-        background: #fffaf6;
-        color: #66735f;
+        border: none;
+        background: linear-gradient(130deg, var(--soft-green), #7e9473);
+        color: #f7f5ef;
         border-radius: 999px;
-        padding: 7px 12px;
-        font-size: 12px;
+        padding: 10px 18px;
+        font-size: 14px;
         font-weight: 600;
         line-height: 1;
         cursor: pointer;
+        box-shadow: 0 10px 20px rgba(74, 95, 70, 0.2);
+        transition:
+          transform 0.2s ease,
+          filter 0.2s ease;
+      }
+
+      .header-pay-btn:active {
+        transform: scale(0.98);
+        filter: brightness(0.98);
       }
 
       .top-about-btn {
@@ -578,6 +594,8 @@
       .cart-list {
         display: grid;
         gap: 10px;
+        grid-column: 1 / -1;
+        width: 100%;
       }
 
       .cart-line {
@@ -631,13 +649,18 @@
       }
 
       .cart-right {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 8px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 6px 10px;
       }
 
       .cart-qty {
+        grid-column: 1 / -1;
+        justify-self: end;
+      }
+
+      .cart-qty-inner {
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -666,16 +689,6 @@
         font-size: 14px;
         line-height: 1;
         cursor: pointer;
-      }
-
-      .cart-pay-wrap {
-        margin-top: 14px;
-        display: flex;
-        justify-content: center;
-      }
-
-      .cart-pay-btn {
-        width: min(360px, 100%);
       }
 
       .delivery-card {
@@ -1466,15 +1479,17 @@
             </p>
           </div>
 
-          <p class="welcome-disclaimer">
-            Каждый букет собирается вручную, поэтому возможны лёгкие отличия от
-            фото на витрине. Это живая композиция в выбранной стилистике: мы
-            бережно сохраняем идею, цветовую гамму и характер букета.
-          </p>
-          <button class="welcome-btn" id="enterBtn">
-            Понимаю и согласен(а), продолжить
-          </button>
-          <p class="welcome-version">версия 0.2.5</p>
+          <div class="welcome-footer">
+            <p class="welcome-disclaimer">
+              Каждый букет собирается вручную, поэтому возможны лёгкие отличия
+              от фото на витрине. Это живая композиция в выбранной стилистике:
+              мы бережно сохраняем идею, цветовую гамму и характер букета.
+            </p>
+            <button class="welcome-btn" id="enterBtn">
+              Понимаю и согласен(а), продолжить
+            </button>
+            <p class="welcome-version">версия 0.2.7</p>
+          </div>
         </article>
       </section>
 
@@ -2058,12 +2073,14 @@
               </div>
               <div class="cart-right" onclick="event.stopPropagation()">
                 <div class="cart-price">${sum.toLocaleString("ru-RU")} ₽</div>
-                <div class="cart-qty">
-                  <button type="button" onclick="changeCartQty('${id}', -1)">−</button>
-                  <span>${qty}</span>
-                  <button type="button" onclick="changeCartQty('${id}', 1)">+</button>
-                </div>
                 <button class="cart-remove" type="button" onclick="removeCartItem('${id}')">×</button>
+                <div class="cart-qty">
+                  <div class="cart-qty-inner">
+                    <button type="button" onclick="changeCartQty('${id}', -1)">−</button>
+                    <span>${qty}</span>
+                    <button type="button" onclick="changeCartQty('${id}', 1)">+</button>
+                  </div>
+                </div>
               </div>
             </article>`;
           })
@@ -2071,10 +2088,7 @@
           .join("");
 
         cartTotal = total;
-        catalog.innerHTML = `<div class="cart-list">${rows}</div>
-          <div class="cart-pay-wrap">
-            <button class="main-cta cart-pay-btn" type="button" onclick="openCheckout(${total})">Оплатить</button>
-          </div>`;
+        catalog.innerHTML = `<div class="cart-list">${rows}</div>`;
         updateHeaderPayButton();
       }
 

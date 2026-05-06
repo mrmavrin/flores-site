@@ -521,7 +521,7 @@
         box-shadow: 0 12px 24px rgba(68, 54, 44, 0.14);
         padding: 6px;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 4px;
       }
 
@@ -606,6 +606,10 @@
         color: #425143;
       }
 
+      .about-title {
+        margin-bottom: 8px;
+      }
+
       .delivery-pill {
         margin-top: 10px;
         display: inline-flex;
@@ -650,6 +654,23 @@
       .nav-icon {
         font-size: 17px;
         line-height: 1;
+      }
+
+      .nav-icon-delivery {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-icon-delivery svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
       .nav-counter {
@@ -1031,6 +1052,98 @@
         pointer-events: all;
       }
 
+      /* ── ABOUT SHEET ───────────────────────────── */
+      .about-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 59;
+        background: rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s;
+      }
+      .about-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .about-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 60;
+        background: #fcf6f1;
+        border-radius: 28px 28px 0 0;
+        transform: translateY(102%);
+        transition: transform 0.34s cubic-bezier(0.2, 0.88, 0.24, 1.08);
+        max-height: 80dvh;
+        display: flex;
+        flex-direction: column;
+      }
+      .about-sheet.open {
+        transform: translateY(0);
+      }
+
+      .about-sheet-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 10px;
+        border-bottom: 1px solid #eadfd4;
+        flex-shrink: 0;
+      }
+      .about-sheet-back {
+        border: none;
+        background: #f0ebe5;
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .about-sheet-title {
+        font-family: "Cormorant Garamond", serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: #425143;
+      }
+      .about-sheet-scroll {
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .about-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        background: #fffcf8;
+        border-radius: 14px;
+        border: 1px solid #eadfd4;
+      }
+      .about-label {
+        font-size: 11px;
+        color: #8a9087;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        min-width: 100px;
+        padding-top: 2px;
+      }
+      .about-value {
+        font-size: 14px;
+        color: #3d4739;
+        line-height: 1.45;
+        flex: 1;
+        white-space: pre-line;
+      }
+
+      /* ── BUILDER SHEET ───────────────────────── */
       .bsheet {
         position: fixed;
         left: 0;
@@ -1327,14 +1440,11 @@
             <div class="header-actions">
               <button
                 class="icon-btn"
-                id="headerCartBtn"
+                id="headerInfoBtn"
                 type="button"
-                aria-label="Корзина"
+                aria-label="Информация"
               >
-                🛍
-              </button>
-              <button class="top-about-btn" id="headerAboutBtn" type="button">
-                О нас
+                ℹ
               </button>
             </div>
           </div>
@@ -1380,6 +1490,17 @@
       <button class="nav-btn" data-nav="cart" type="button">
         <span class="nav-icon">🛍</span>
         <span>Корзина <span class="nav-counter" id="cartCount">0</span></span>
+      </button>
+      <button class="nav-btn" data-nav="about" type="button">
+        <span class="nav-icon nav-icon-delivery" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" focusable="false">
+            <path d="M3 7h11v8H3z" />
+            <path d="M14 10h3l3 3v2h-6z" />
+            <circle cx="8" cy="17" r="1.7" />
+            <circle cx="18" cy="17" r="1.7" />
+          </svg>
+        </span>
+        <span>Доставка</span>
       </button>
     </nav>
 
@@ -1469,6 +1590,17 @@
           </button>
         </div>
       </div>
+    </section>
+
+    <div class="about-overlay" id="aboutOverlay" onclick="closeAbout()"></div>
+    <section class="about-sheet" id="aboutSheet">
+      <div class="about-sheet-header">
+        <button class="about-sheet-back" type="button" onclick="closeAbout()">
+          ←
+        </button>
+        <span class="about-sheet-title">О нас</span>
+      </div>
+      <div class="about-sheet-scroll" id="aboutSheetScroll"></div>
     </section>
 
     <div
@@ -1609,6 +1741,42 @@
         const json = JSON.parse(text.substring(47, text.length - 2));
         const value = json?.table?.rows?.[0]?.c?.[0]?.v;
         return String(value || "").trim();
+      }
+
+      // Fetches exact range B2:C5; shows C on the left and B on the right
+      async function fetchAboutRows() {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json;headers=0&sheet=${encodeURIComponent("Настройки")}&range=${encodeURIComponent("B2:C5")}&tq=${encodeURIComponent("select *")}`;
+        const response = await fetch(url);
+        const text = await response.text();
+        const json = JSON.parse(text.substring(47, text.length - 2));
+        return (json?.table?.rows || []).map((row) => ({
+          label: String(row?.c?.[1]?.v || "").trim(),
+          value: String(row?.c?.[0]?.v || "").trim(),
+        }));
+      }
+
+      let aboutRows = [];
+
+      function openAbout() {
+        const scroll = document.getElementById("aboutSheetScroll");
+        scroll.innerHTML =
+          aboutRows
+            .filter((r) => r.label || r.value)
+            .map(
+              (r) => `<div class="about-row">
+            <div class="about-label">${r.label}</div>
+            <div class="about-value">${r.value}</div>
+          </div>`,
+            )
+            .join("") ||
+          '<div style="color:#8a9087;font-size:14px">Информация не заполнена</div>';
+        document.getElementById("aboutOverlay").classList.add("open");
+        document.getElementById("aboutSheet").classList.add("open");
+      }
+
+      function closeAbout() {
+        document.getElementById("aboutOverlay").classList.remove("open");
+        document.getElementById("aboutSheet").classList.remove("open");
       }
 
       function statusCode(b) {
@@ -1795,14 +1963,20 @@
       function updateServiceCardVisibility() {
         const service = document.getElementById("serviceCard");
         if (!service) return;
-        const hidden = currentView === "cart" || currentView === "about";
+        const hidden =
+          currentView === "cart" ||
+          currentView === "about" ||
+          currentView === "info";
         service.classList.toggle("hidden", hidden);
       }
 
       function updateHeaderMode() {
         const filters = document.getElementById("filters");
         if (!filters) return;
-        const hideFilters = currentView === "cart" || currentView === "about";
+        const hideFilters =
+          currentView === "cart" ||
+          currentView === "about" ||
+          currentView === "info";
         filters.classList.toggle("hidden", hideFilters);
       }
 
@@ -1888,6 +2062,24 @@
         </div>`;
       }
 
+      function renderInfoView() {
+        const catalog = document.getElementById("catalog");
+        const rows = aboutRows
+          .filter((r) => r.label || r.value)
+          .map(
+            (r) => `<div class="about-row">
+              <div class="about-label">${r.label}</div>
+              <div class="about-value">${r.value}</div>
+            </div>`,
+          )
+          .join("");
+
+        catalog.innerHTML = `<div class="delivery-card">
+          <h3 class="delivery-title about-title">О нас</h3>
+          ${rows || '<div class="empty">Информация пока не заполнена.</div>'}
+        </div>`;
+      }
+
       function openCheckout(total) {
         const amount = toNumber(total);
         const message = `К оплате: ${amount.toLocaleString("ru-RU")} ₽\n\nОплата через ЮKassa скоро будет подключена.`;
@@ -1905,6 +2097,10 @@
       function renderCurrentView() {
         updateServiceCardVisibility();
         updateHeaderMode();
+        if (currentView === "info") {
+          renderInfoView();
+          return;
+        }
         if (currentView === "about") {
           renderDeliveryView();
           return;
@@ -2274,11 +2470,8 @@
         });
 
         document
-          .getElementById("headerCartBtn")
-          .addEventListener("click", () => setView("cart"));
-        document
-          .getElementById("headerAboutBtn")
-          .addEventListener("click", () => setView("about"));
+          .getElementById("headerInfoBtn")
+          .addEventListener("click", () => setView("info"));
       }
 
       async function loadData() {
@@ -2290,6 +2483,7 @@
             media,
             settings,
             defaultPickupAddress,
+            aboutRows,
           ] = await Promise.all([
             fetchSheet("Букеты"),
             fetchSheet("Состав"),
@@ -2297,6 +2491,7 @@
             fetchSheet("Медиа"),
             fetchSheet("Настройки").catch(() => []),
             fetchSettingsB3().catch(() => "Адрес магазина уточняется"),
+            fetchAboutRows().catch(() => []),
           ]);
           buildGroupFilters();
           buildFilters();

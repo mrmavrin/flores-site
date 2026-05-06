@@ -346,8 +346,9 @@
 
       .card-media {
         position: relative;
-        aspect-ratio: 3 / 4;
-        width: 100%;
+        aspect-ratio: 1 / 1;
+        width: calc(100% + 2px);
+        margin: -1px -1px 0;
         background: #f3ece5;
       }
 
@@ -355,6 +356,7 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
+        object-position: center;
         display: block;
       }
 
@@ -365,6 +367,8 @@
         align-items: center;
         justify-content: center;
         font-size: 54px;
+        background-position: center;
+        background-size: cover;
       }
 
       .fav-btn {
@@ -550,6 +554,7 @@
         z-index: 50;
         background: #fcf6f1;
         border-radius: 28px 28px 0 0;
+        overflow: hidden;
         transform: translateY(102%);
         transition: transform 0.34s cubic-bezier(0.2, 0.88, 0.24, 1.08);
         max-height: 94dvh;
@@ -566,27 +571,41 @@
         height: 4px;
         border-radius: 999px;
         background: #e3d7cd;
-        margin: 10px auto 8px;
+        margin: 0;
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 54;
+        pointer-events: none;
       }
 
       .sheet-scroll {
         overflow-y: auto;
-        padding: 0 14px 130px;
+        padding: 0 0 130px;
       }
 
       .sheet-media {
-        border-radius: 18px;
+        border-radius: 0;
         overflow: hidden;
-        aspect-ratio: 4 / 3;
+        height: min(58dvh, 540px);
         background: #f2ebe4;
         position: relative;
+      }
+
+      .sheet-media.media-image {
+        background: #f2ebe4;
+      }
+
+      .sheet-media.media-video {
+        background: #121212;
       }
 
       .sheet-track {
         display: flex;
         width: 100%;
         height: 100%;
-        transition: transform 0.28s ease;
+        transition: transform 0.34s cubic-bezier(0.2, 0.8, 0.24, 1);
       }
 
       .slide {
@@ -603,7 +622,15 @@
       .slide video {
         width: 100%;
         height: 100%;
+      }
+
+      .slide img {
         object-fit: cover;
+      }
+
+      .slide video {
+        object-fit: contain;
+        background: #111;
       }
 
       .sheet-top-controls {
@@ -625,6 +652,35 @@
         color: #6f7869;
         font-size: 18px;
         pointer-events: auto;
+      }
+
+      .sheet-carousel-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border-radius: 999px;
+        border: none;
+        background: rgba(255, 255, 255, 0.88);
+        color: #62705f;
+        font-size: 20px;
+        line-height: 1;
+        box-shadow: 0 4px 12px rgba(41, 34, 29, 0.12);
+        cursor: pointer;
+        z-index: 4;
+      }
+
+      .sheet-carousel-btn.prev {
+        left: 10px;
+      }
+
+      .sheet-carousel-btn.next {
+        right: 10px;
+      }
+
+      .sheet-media.single-slide .sheet-carousel-btn {
+        display: none;
       }
 
       .sheet-dots {
@@ -650,7 +706,19 @@
       }
 
       .sheet-info {
-        padding: 16px 4px 0;
+        padding: 16px 14px 0;
+      }
+
+      @media (max-width: 480px) {
+        .sheet-media {
+          height: 52dvh;
+        }
+
+        .sheet-carousel-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 18px;
+        }
       }
 
       .sheet-name {
@@ -1189,6 +1257,24 @@
       <div class="sheet-scroll" id="sheetScroll">
         <div class="sheet-media" id="sheetMedia">
           <div class="sheet-track" id="sheetTrack"></div>
+          <button
+            class="sheet-carousel-btn prev"
+            id="sheetPrevBtn"
+            type="button"
+            onclick="slideSheet(-1)"
+            aria-label="Предыдущий слайд"
+          >
+            ‹
+          </button>
+          <button
+            class="sheet-carousel-btn next"
+            id="sheetNextBtn"
+            type="button"
+            onclick="slideSheet(1)"
+            aria-label="Следующий слайд"
+          >
+            ›
+          </button>
           <div class="sheet-top-controls">
             <button
               class="sheet-round-btn"
@@ -1340,6 +1426,20 @@
         return String(value ?? "").trim();
       }
 
+      function mediaBouquetId(m) {
+        return normalizeId(
+          m.bouquet_id ?? m.bouquetId ?? m.id_bouquet ?? m.bouquet ?? m.item_id,
+        );
+      }
+
+      function mediaTypeOf(m) {
+        const typeRaw = normalize(m.type ?? m.media_type ?? m.kind ?? "");
+        if (typeRaw.includes("video") || typeRaw === "vid") return "video";
+        const url = normalize(String(m.url ?? ""));
+        if (/\.(mp4|webm|mov|m4v)(\?|$)/.test(url)) return "video";
+        return "image";
+      }
+
       function splitGroups(value) {
         return String(value || "")
           .split(/[,;|]/)
@@ -1385,7 +1485,7 @@
       function mediaFor(bouquetId) {
         const target = normalizeId(bouquetId);
         return media
-          .filter((m) => normalizeId(m.bouquet_id) === target)
+          .filter((m) => mediaBouquetId(m) === target)
           .sort(
             (a, b) =>
               toNumber(a.order ?? a.sort ?? a.position) -
@@ -1396,9 +1496,7 @@
       function firstImageFor(bouquetId) {
         const target = normalizeId(bouquetId);
         return media.find(
-          (m) =>
-            normalizeId(m.bouquet_id) === target &&
-            normalize(m.type) !== "video",
+          (m) => mediaBouquetId(m) === target && mediaTypeOf(m) !== "video",
         );
       }
 
@@ -1779,11 +1877,16 @@
       function renderSlides() {
         const track = document.getElementById("sheetTrack");
         const dots = document.getElementById("sheetDots");
+        const mediaBox = document.getElementById("sheetMedia");
+        const hasVideo = slides.some((slide) => mediaTypeOf(slide) === "video");
+        mediaBox.classList.toggle("media-video", hasVideo);
+        mediaBox.classList.toggle("media-image", !hasVideo);
+        mediaBox.classList.toggle("single-slide", slides.length <= 1);
 
         track.innerHTML = slides
           .map((slide) => {
-            if (normalize(slide.type) === "video") {
-              return `<div class="slide"><video src="${slide.url}" autoplay muted loop playsinline></video></div>`;
+            if (mediaTypeOf(slide) === "video") {
+              return `<div class="slide"><video src="${slide.url}" autoplay muted loop playsinline webkit-playsinline preload="metadata"></video></div>`;
             }
             if (normalize(slide.type) === "placeholder") {
               return `<div class="slide" style="background:linear-gradient(145deg,${slide.color1},${slide.color2})">${slide.emoji}</div>`;
@@ -1799,6 +1902,22 @@
           )
           .join("");
 
+        track.querySelectorAll("video").forEach((video) => {
+          const p = video.play();
+          if (p && typeof p.catch === "function") {
+            p.catch(() => {
+              video.controls = true;
+              video.muted = true;
+            });
+          }
+        });
+
+        updateSlide();
+      }
+
+      function slideSheet(dir) {
+        if (slides.length <= 1) return;
+        slideIndex = (slideIndex + dir + slides.length) % slides.length;
         updateSlide();
       }
 
@@ -1941,6 +2060,8 @@
 
       let sheetTouchX = 0;
       let sheetTouchY = 0;
+      let sheetPointerX = 0;
+      let sheetPointerDown = false;
 
       document.getElementById("sheetMedia").addEventListener(
         "touchstart",
@@ -1954,14 +2075,34 @@
         "touchend",
         (event) => {
           const dx = event.changedTouches[0].clientX - sheetTouchX;
-          if (Math.abs(dx) > 42 && slides.length > 1) {
-            slideIndex =
-              (slideIndex + (dx < 0 ? 1 : -1) + slides.length) % slides.length;
-            updateSlide();
-          }
+          if (Math.abs(dx) > 42) slideSheet(dx < 0 ? 1 : -1);
         },
         { passive: true },
       );
+
+      document
+        .getElementById("sheetMedia")
+        .addEventListener("pointerdown", (event) => {
+          if (event.pointerType === "mouse" || event.pointerType === "pen") {
+            sheetPointerDown = true;
+            sheetPointerX = event.clientX;
+          }
+        });
+
+      document
+        .getElementById("sheetMedia")
+        .addEventListener("pointerup", (event) => {
+          if (!sheetPointerDown) return;
+          sheetPointerDown = false;
+          const dx = event.clientX - sheetPointerX;
+          if (Math.abs(dx) > 40) slideSheet(dx < 0 ? 1 : -1);
+        });
+
+      document
+        .getElementById("sheetMedia")
+        .addEventListener("pointercancel", () => {
+          sheetPointerDown = false;
+        });
 
       document.getElementById("sheet").addEventListener(
         "touchstart",

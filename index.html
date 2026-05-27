@@ -2229,6 +2229,21 @@
                 bouquet_id: currentBouquet.id || "unknown",
                 bouquet_name: currentBouquet.name,
                 bouquet_price: Number(currentBouquet.price),
+
+                items_count: currentBouquet.items_count || 1,
+                items_text: currentBouquet.items_text || currentBouquet.name,
+                items_json: JSON.stringify(
+                  currentBouquet.items || [
+                    {
+                      id: currentBouquet.id || "unknown",
+                      name: currentBouquet.name,
+                      price: Number(currentBouquet.price),
+                      qty: 1,
+                      sum: Number(currentBouquet.price),
+                    },
+                  ],
+                ),
+
                 telegram_id: telegramId,
                 telegram_username: telegramUsername,
               }),
@@ -2273,10 +2288,34 @@
         const amount = toNumber(total);
         if (!amount) return;
 
+        const items = Array.from(cartMap.entries())
+          .map(([id, qty]) => {
+            const bouquet = bouquets.find(
+              (b) => normalizeId(b.id) === normalizeId(id),
+            );
+            if (!bouquet) return null;
+
+            const price = Number(bouquet.price) || 0;
+
+            return {
+              id: bouquet.id || id,
+              name: bouquet.name || "Без названия",
+              price: price,
+              qty: qty,
+              sum: price * qty,
+            };
+          })
+          .filter(Boolean);
+
         currentBouquet = {
-          id: Date.now(),
-          name: "Оплата заказа",
+          id: "cart_" + Date.now(),
+          name: items.map((item) => `${item.name} × ${item.qty}`).join("; "),
           price: amount,
+          items: items,
+          items_text: items
+            .map((item) => `${item.name} × ${item.qty} — ${item.sum} ₽`)
+            .join("\n"),
+          items_count: items.reduce((sum, item) => sum + item.qty, 0),
         };
 
         handleBuy();

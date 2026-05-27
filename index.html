@@ -1531,11 +1531,7 @@
               <p>Онлайн витрина</p>
             </div>
             <div class="header-actions">
-              <button
-                class="header-pay-btn hidden"
-                id="headerPayBtn"
-                type="button"
-              >
+              <button class="header-pay-btn hidden" id="buyBtn" type="button">
                 Оплатить
               </button>
               <button
@@ -2122,7 +2118,7 @@
       }
 
       function updateHeaderPayButton() {
-        const btn = document.getElementById("headerPayBtn");
+        const btn = document.getElementById("buyBtn");
         if (!btn) return;
         const shouldShow = currentView === "cart" && cartMap.size > 0;
         btn.classList.toggle("hidden", !shouldShow);
@@ -2208,18 +2204,82 @@
         </div>`;
       }
 
+      async function handleBuy() {
+        if (!currentBouquet) return;
+
+        const btn = document.getElementById("buyBtn");
+        const originalText = btn.textContent;
+        btn.textContent = "⏳ Создаём платёж...";
+        btn.disabled = true;
+
+        // Получаем данные пользователя из Telegram
+        const user = tg?.initDataUnsafe?.user;
+        const telegramId = user?.id?.toString() || "";
+        const telegramUsername = user?.username
+          ? "@" + user.username
+          : user?.first_name || "Гость";
+
+        try {
+          const res = await fetch(
+            "https://aitechnologiya.store/webhook/alfa-payment",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                bouquet_id: currentBouquet.id || "unknown",
+                bouquet_name: currentBouquet.name,
+                bouquet_price: Number(currentBouquet.price),
+                telegram_id: telegramId,
+                telegram_username: telegramUsername,
+              }),
+            },
+          );
+
+          if (!res.ok) throw new Error("Ошибка сервера: " + res.status);
+
+          const data = await res.json();
+
+          if (data.paymentUrl) {
+            // Сохраняем order_id локально на случай возврата
+            if (data.order_id)
+              sessionStorage.setItem("last_order_id", data.order_id);
+
+            if (tg) {
+              tg.openLink(data.paymentUrl);
+            } else {
+              window.location.href = data.paymentUrl;
+            }
+          } else {
+            throw new Error(data.error || "Не получили ссылку на оплату");
+          }
+        } catch (e) {
+          console.error("Ошибка оплаты:", e);
+          if (tg) {
+            tg.showPopup({
+              title: "⚠️ Ошибка",
+              message: "Не удалось создать платёж. Попробуйте ещё раз.",
+              buttons: [{ type: "ok", text: "Понятно" }],
+            });
+          } else {
+            alert("Ошибка: " + e.message);
+          }
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }
+
       function openCheckout(total) {
         const amount = toNumber(total);
-        const message = `К оплате: ${amount.toLocaleString("ru-RU")} ₽\n\nОплата через ЮKassa скоро будет подключена.`;
-        if (tg) {
-          tg.showPopup({
-            title: "Оплата",
-            message,
-            buttons: [{ type: "ok", text: "Понятно" }],
-          });
-        } else {
-          alert(message);
-        }
+        if (!amount) return;
+
+        currentBouquet = {
+          id: Date.now(),
+          name: "Оплата заказа",
+          price: amount,
+        };
+
+        handleBuy();
       }
 
       function renderCurrentView() {
@@ -2612,7 +2672,7 @@
           .getElementById("headerInfoBtn")
           .addEventListener("click", () => setView("info"));
         document
-          .getElementById("headerPayBtn")
+          .getElementById("buyBtn")
           .addEventListener("click", () => openCheckout(cartTotal));
       }
 
@@ -2717,8 +2777,72 @@
         });
       });
 
+      // ── СТАТУС ПОСЛЕ ОПЛАТЫ ─────────────────────────────
+      function checkPaymentStatus() {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get("status");
+        const orderId =
+          params.get("order_id") || sessionStorage.getItem("last_order_id");
+
+        if (!status) return;
+
+        // Убираем параметры из URL
+        window.history.replaceState({}, "", window.location.pathname);
+
+        if (status === "paid") {
+          sessionStorage.removeItem("last_order_id");
+
+          if (tg) {
+            tg.showPopup({
+              title: "✅ Оплата прошла!",
+              message:
+                "Ваш заказ принят. Флорист уже готовит букет — мы сообщим когда он будет готов.",
+              buttons: [{ type: "ok", text: "Отлично!" }],
+            });
+          } else {
+            showStatusBanner(
+              "success",
+              "✅ Оплата прошла! Заказ #" + (orderId || "") + " принят.",
+            );
+          }
+        }
+
+        if (status === "fail") {
+          if (tg) {
+            tg.showPopup({
+              title: "❌ Оплата не прошла",
+              message:
+                "Что-то пошло не так. Попробуйте ещё раз или выберите другой способ оплаты.",
+              buttons: [{ type: "ok", text: "Попробовать снова" }],
+            });
+          } else {
+            showStatusBanner(
+              "error",
+              "❌ Оплата не прошла. Попробуйте ещё раз.",
+            );
+          }
+        }
+      }
+
+      function showStatusBanner(type, message) {
+        const banner = document.createElement("div");
+        banner.style.cssText = `
+      position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%);
+    background: ${type === "success" ? "#4CAF50" : "#f44336"};
+      color: white; padding: 14px 24px;
+      border-radius: 12px; font-size: 15px; font-weight: 500;
+      z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      max-width: 90vw; text-align: center;
+  `;
+        banner.textContent = message;
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 5000);
+      }
+
       setupNavigation();
       updateCounters();
+      checkPaymentStatus();
       loadData();
     </script>
   </body>

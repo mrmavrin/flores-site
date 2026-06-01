@@ -2504,8 +2504,8 @@
             if (!price || !quantity) return null;
 
             return {
-              id: bouquet.id || id,
-              name: bouquet.name || "Без названия",
+              id: bouquet.id,
+              name: bouquet.name,
               price: price,
               qty: quantity,
               sum: price * quantity,
@@ -2547,18 +2547,24 @@
           return;
         }
 
+        const itemsText = items
+          .map((item) => `${item.name} × ${item.qty} — ${item.sum} ₽`)
+          .join("\n");
+        const bouquetName = items
+          .map((item) => `${item.name} × ${item.qty}`)
+          .join("; ");
         const totalAmount = items.reduce((sum, item) => sum + item.sum, 0);
-        if (!totalAmount) {
+        const deliveryType = "";
+        const deliveryAddress = "";
+        const deliveryPrice = 0;
+        const finalAmount = totalAmount + Number(deliveryPrice || 0);
+
+        if (!finalAmount) {
           showCheckoutError("Не удалось посчитать сумму заказа.");
           return;
         }
 
         const source = getOrderSource();
-        const legacyOrderId =
-          items.length === 1 ? items[0].id : `cart_${Date.now()}`;
-        const legacyOrderName = items
-          .map((item) => `${item.name} × ${item.qty}`)
-          .join("; ");
 
         const payload = {
           source: source.source,
@@ -2570,16 +2576,19 @@
           customer_email: customer.email,
           customer_comment: customer.comment,
 
-          items_count: items.reduce((sum, item) => sum + item.qty, 0),
-          items_text: items
-            .map((item) => `${item.name} × ${item.qty} — ${item.sum} ₽`)
-            .join("\n"),
-          items_json: JSON.stringify(items),
-          total_amount: totalAmount,
-
-          bouquet_id: legacyOrderId,
-          bouquet_name: legacyOrderName,
+          bouquet_id: items.length === 1 ? items[0].id : `cart_${Date.now()}`,
+          bouquet_name: bouquetName,
           bouquet_price: totalAmount,
+
+          items_count: items.reduce((sum, item) => sum + item.qty, 0),
+          items_text: itemsText,
+          items_json: JSON.stringify(items),
+
+          delivery_type: deliveryType,
+          delivery_address: deliveryAddress,
+          delivery_price: deliveryPrice,
+
+          total_amount: finalAmount,
 
           order_source: source.source,
           order_source_label:
@@ -3252,9 +3261,117 @@
         setTimeout(() => banner.remove(), 5000);
       }
 
+      function escapeHtml(value) {
+        return String(value ?? "").replace(
+          /[&<>"']/g,
+          (char) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#039;",
+            })[char],
+        );
+      }
+
+      function handlePaymentReturn() {
+        const params = new URLSearchParams(window.location.search);
+
+        const payment = params.get("payment");
+        const orderId = params.get("order_id");
+
+        if (!payment) return;
+
+        if (payment === "success") {
+          showPaymentResult({
+            title: "Оплата принята",
+            text: orderId
+              ? `Заказ ${orderId} создан. Мы проверяем оплату и передаём заказ флористу.`
+              : "Заказ создан. Мы проверяем оплату и передаём заказ флористу.",
+          });
+        }
+
+        if (payment === "fail") {
+          showPaymentResult({
+            title: "Оплата не прошла",
+            text: orderId
+              ? `Заказ ${orderId} не был оплачен. Вы можете попробовать ещё раз.`
+              : "Заказ не был оплачен. Вы можете попробовать ещё раз.",
+          });
+        }
+
+        // Чистим URL, чтобы при обновлении страницы сообщение не всплывало бесконечно
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      function showPaymentResult({ title, text }) {
+        const modal = document.createElement("div");
+
+        modal.style.position = "fixed";
+        modal.style.inset = "0";
+        modal.style.zIndex = "9999";
+        modal.style.background = "rgba(36,36,28,0.42)";
+        modal.style.display = "flex";
+        modal.style.alignItems = "center";
+        modal.style.justifyContent = "center";
+        modal.style.padding = "18px";
+
+        const safeTitle = escapeHtml(title);
+        const safeText = escapeHtml(text);
+
+        modal.innerHTML = `
+          <div style="
+            width: min(420px, 100%);
+            background: #fcf6f1;
+            border-radius: 26px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 12px 30px rgba(68,54,44,0.18);
+            color: #364037;
+            font-family: Manrope, Arial, sans-serif;
+          ">
+            <h2 style="
+              margin: 0 0 10px;
+              font-family: 'Cormorant Garamond', serif;
+              font-size: 34px;
+              line-height: 1;
+            ">${safeTitle}</h2>
+
+            <p style="
+              margin: 0 0 18px;
+              color: #6f7869;
+              line-height: 1.45;
+            ">${safeText}</p>
+
+            <button id="closePaymentModalBtn" style="
+              width: 100%;
+              margin-top: 0;
+              border: 1px solid #eadfd5;
+              border-radius: 999px;
+              background: #fffdfb;
+              color: #687062;
+              padding: 13px 18px;
+              font-weight: 700;
+              font-size: 15px;
+              cursor: pointer;
+            ">Понятно</button>
+          </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document
+          .getElementById("closePaymentModalBtn")
+          ?.addEventListener("click", () => {
+            modal.remove();
+          });
+      }
+
       setupNavigation();
       updateCounters();
       checkPaymentStatus();
+      document.addEventListener("DOMContentLoaded", handlePaymentReturn);
       loadData();
     </script>
   </body>

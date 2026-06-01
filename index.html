@@ -825,7 +825,8 @@
         text-transform: uppercase;
       }
 
-      .checkout-field input {
+      .checkout-field input,
+      .checkout-field textarea {
         width: 100%;
         border: 1px solid #e4d7cb;
         border-radius: 14px;
@@ -836,7 +837,13 @@
         outline: none;
       }
 
-      .checkout-field input:focus {
+      .checkout-field textarea {
+        min-height: 82px;
+        resize: vertical;
+      }
+
+      .checkout-field input:focus,
+      .checkout-field textarea:focus {
         border-color: var(--soft-green);
         box-shadow: 0 0 0 3px rgba(142, 162, 132, 0.16);
       }
@@ -1731,8 +1738,7 @@
         <div>
           <h3 class="checkout-title">Контакты для заказа</h3>
           <p class="checkout-note">
-            Укажите имя и телефон. Без этих данных мы не сможем передать заказ
-            в оплату.
+            Укажите данные, чтобы флорист мог связаться с вами по заказу.
           </p>
         </div>
         <button
@@ -1767,6 +1773,24 @@
             placeholder="+7"
             required
           />
+        </div>
+        <div class="checkout-field">
+          <label for="checkoutEmail">Email необязательно</label>
+          <input
+            id="checkoutEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="mail@example.com"
+          />
+        </div>
+        <div class="checkout-field">
+          <label for="checkoutComment">Комментарий необязательно</label>
+          <textarea
+            id="checkoutComment"
+            name="comment"
+            placeholder="Например: позвонить перед доставкой"
+          ></textarea>
         </div>
         <div class="checkout-error" id="checkoutError">
           Заполните имя и телефон перед оплатой.
@@ -1905,8 +1929,6 @@
         tg.ready();
         tg.expand();
       }
-      const isTelegramMiniApp = Boolean(tg?.initData);
-      const CHECKOUT_SOURCE = isTelegramMiniApp ? "telegram_miniapp" : "site";
 
       const GRADIENTS = [
         ["#f8d7d8", "#e7b3ba", "🌷"],
@@ -2379,34 +2401,89 @@
         return String(value || "").replace(/[^\d+]/g, "");
       }
 
-      function getSiteCustomer() {
+      function getOrderSource() {
+        const user = tg?.initDataUnsafe?.user;
+        if (tg && user?.id) {
+          return {
+            source: "telegram",
+            telegram_id: String(user.id || ""),
+            telegram_username: user.username || "",
+            telegram_first_name: user.first_name || "",
+            telegram_last_name: user.last_name || "",
+          };
+        }
+
+        return {
+          source: "web",
+          telegram_id: "",
+          telegram_username: "",
+          telegram_first_name: "",
+          telegram_last_name: "",
+        };
+      }
+
+      function getCheckoutCustomer() {
         const name = document.getElementById("checkoutName")?.value.trim() || "";
         const phoneRaw = document.getElementById("checkoutPhone")?.value.trim() || "";
         const phone = cleanPhone(phoneRaw);
+        const email = document.getElementById("checkoutEmail")?.value.trim() || "";
+        const comment = document.getElementById("checkoutComment")?.value.trim() || "";
 
         return {
           name,
           phone: phoneRaw,
+          email,
+          comment,
           isValid: name.length >= 2 && phone.replace(/\D/g, "").length >= 10,
         };
       }
 
       function showCheckoutError(message) {
         const error = document.getElementById("checkoutError");
-        if (!error) return;
+        if (!error) {
+          alert(message);
+          return;
+        }
         error.textContent = message;
         error.classList.add("open");
       }
 
       function clearCheckoutError() {
-        document.getElementById("checkoutError")?.classList.remove("open");
+        const error = document.getElementById("checkoutError");
+        if (!error) return;
+        error.textContent = "";
+        error.classList.remove("open");
+      }
+
+      function prefillCustomerFromTelegram() {
+        const source = getOrderSource();
+        if (source.source !== "telegram") return;
+
+        const nameInput = document.getElementById("checkoutName");
+        if (!nameInput || nameInput.value.trim()) return;
+
+        const fullName = [
+          source.telegram_first_name,
+          source.telegram_last_name,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .trim();
+
+        if (fullName) nameInput.value = fullName;
       }
 
       function openCheckoutContact() {
         clearCheckoutError();
+        prefillCustomerFromTelegram();
         document.getElementById("checkoutOverlay").classList.add("open");
         document.getElementById("checkoutModal").classList.add("open");
-        setTimeout(() => document.getElementById("checkoutName")?.focus(), 80);
+        setTimeout(() => {
+          const customer = getCheckoutCustomer();
+          document
+            .getElementById(customer.name ? "checkoutPhone" : "checkoutName")
+            ?.focus();
+        }, 80);
       }
 
       function closeCheckoutContact() {
@@ -2414,126 +2491,8 @@
         document.getElementById("checkoutModal").classList.remove("open");
       }
 
-      function getCustomerPayload() {
-        if (isTelegramMiniApp) {
-          const user = tg?.initDataUnsafe?.user;
-          const username = user?.username ? "@" + user.username : "";
-          const fallbackName = [user?.first_name, user?.last_name]
-            .filter(Boolean)
-            .join(" ");
-
-          return {
-            customer_name: fallbackName || username || "Telegram user",
-            customer_phone: "",
-            telegram_id: user?.id?.toString() || "",
-            telegram_username: username || fallbackName || "Telegram user",
-          };
-        }
-
-        const siteCustomer = getSiteCustomer();
-        if (!siteCustomer.isValid) return null;
-
-        return {
-          customer_name: siteCustomer.name,
-          customer_phone: siteCustomer.phone,
-          telegram_id: "",
-          telegram_username: "",
-        };
-      }
-
-      async function handleBuy() {
-        if (!currentBouquet) return;
-
-        const customer = getCustomerPayload();
-        if (!customer) {
-          openCheckoutContact();
-          showCheckoutError("Заполните имя и телефон перед оплатой.");
-          return;
-        }
-
-        const btn = document.getElementById("buyBtn");
-        const originalText = btn.textContent;
-        btn.textContent = "⏳ Создаём платёж...";
-        btn.disabled = true;
-
-        try {
-          const res = await fetch(
-            "https://aitechnologiya.store/webhook/alfa-payment",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                bouquet_id: currentBouquet.id || "unknown",
-                bouquet_name: currentBouquet.name,
-                bouquet_price: Number(currentBouquet.price),
-
-                items_count: currentBouquet.items_count || 1,
-                items_text: currentBouquet.items_text || currentBouquet.name,
-                items_json: JSON.stringify(
-                  currentBouquet.items || [
-                    {
-                      id: currentBouquet.id || "unknown",
-                      name: currentBouquet.name,
-                      price: Number(currentBouquet.price),
-                      qty: 1,
-                      sum: Number(currentBouquet.price),
-                    },
-                  ],
-                ),
-
-                order_source: CHECKOUT_SOURCE,
-                order_source_label: isTelegramMiniApp ? "Telegram mini app" : "Site",
-                opened_from: CHECKOUT_SOURCE,
-                payment_status: "payment_created",
-                google_sheet_id: SHEET_ID,
-                orders_sheet_name: "Заказы",
-                customer_name: customer.customer_name,
-                customer_phone: customer.customer_phone,
-                telegram_id: customer.telegram_id,
-                telegram_username: customer.telegram_username,
-              }),
-            },
-          );
-
-          if (!res.ok) throw new Error("Ошибка сервера: " + res.status);
-
-          const data = await res.json();
-
-          if (data.paymentUrl) {
-            // Сохраняем order_id локально на случай возврата
-            if (data.order_id)
-              sessionStorage.setItem("last_order_id", data.order_id);
-
-            if (isTelegramMiniApp) {
-              tg.openLink(data.paymentUrl);
-            } else {
-              window.location.href = data.paymentUrl;
-            }
-          } else {
-            throw new Error(data.error || "Не получили ссылку на оплату");
-          }
-        } catch (e) {
-          console.error("Ошибка оплаты:", e);
-          if (isTelegramMiniApp) {
-            tg.showPopup({
-              title: "⚠️ Ошибка",
-              message: "Не удалось создать платёж. Попробуйте ещё раз.",
-              buttons: [{ type: "ok", text: "Понятно" }],
-            });
-          } else {
-            alert("Ошибка: " + e.message);
-          }
-        } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }
-      }
-
-      function openCheckout(total) {
-        const amount = toNumber(total);
-        if (!amount) return;
-
-        const items = Array.from(cartMap.entries())
+      function buildCartItems() {
+        return Array.from(cartMap.entries())
           .map(([id, qty]) => {
             const bouquet = bouquets.find(
               (b) => normalizeId(b.id) === normalizeId(id),
@@ -2541,19 +2500,181 @@
             if (!bouquet) return null;
 
             const price = Number(bouquet.price) || 0;
+            const quantity = Number(qty) || 0;
+            if (!price || !quantity) return null;
 
             return {
               id: bouquet.id || id,
               name: bouquet.name || "Без названия",
               price: price,
-              qty: qty,
-              sum: price * qty,
+              qty: quantity,
+              sum: price * quantity,
             };
           })
           .filter(Boolean);
+      }
+
+      function openPaymentUrl(paymentUrl) {
+        if (tg?.openLink) {
+          tg.openLink(paymentUrl);
+          return;
+        }
+
+        window.location.href = paymentUrl;
+      }
+
+      async function submitCheckoutOrder() {
+        const customer = getCheckoutCustomer();
+
+        if (!customer.name) {
+          showCheckoutError("Укажите имя.");
+          return;
+        }
+
+        if (!customer.phone) {
+          showCheckoutError("Укажите телефон.");
+          return;
+        }
+
+        if (!customer.isValid) {
+          showCheckoutError("Проверьте имя и телефон перед оплатой.");
+          return;
+        }
+
+        const items = buildCartItems();
+        if (!items.length) {
+          showCheckoutError("Корзина пуста.");
+          return;
+        }
+
+        const totalAmount = items.reduce((sum, item) => sum + item.sum, 0);
+        if (!totalAmount) {
+          showCheckoutError("Не удалось посчитать сумму заказа.");
+          return;
+        }
+
+        const source = getOrderSource();
+        const legacyOrderId =
+          items.length === 1 ? items[0].id : `cart_${Date.now()}`;
+        const legacyOrderName = items
+          .map((item) => `${item.name} × ${item.qty}`)
+          .join("; ");
+
+        const payload = {
+          source: source.source,
+          telegram_id: source.telegram_id,
+          telegram_username: source.telegram_username,
+
+          customer_name: customer.name,
+          customer_phone: customer.phone,
+          customer_email: customer.email,
+          customer_comment: customer.comment,
+
+          items_count: items.reduce((sum, item) => sum + item.qty, 0),
+          items_text: items
+            .map((item) => `${item.name} × ${item.qty} — ${item.sum} ₽`)
+            .join("\n"),
+          items_json: JSON.stringify(items),
+          total_amount: totalAmount,
+
+          bouquet_id: legacyOrderId,
+          bouquet_name: legacyOrderName,
+          bouquet_price: totalAmount,
+
+          order_source: source.source,
+          order_source_label:
+            source.source === "telegram" ? "Telegram mini app" : "Web site",
+          opened_from: source.source,
+          payment_status: "pending",
+          google_sheet_id: SHEET_ID,
+          orders_sheet_name: "Заказы",
+        };
+
+        const payButton = document.querySelector("#checkoutForm .main-cta");
+        const headerButton = document.getElementById("buyBtn");
+        const originalPayText = payButton?.textContent || "";
+        const originalHeaderText = headerButton?.textContent || "";
+
+        clearCheckoutError();
+        if (payButton) {
+          payButton.textContent = "Создаём платёж...";
+          payButton.disabled = true;
+        }
+        if (headerButton) {
+          headerButton.textContent = "Создаём платёж...";
+          headerButton.disabled = true;
+        }
+
+        try {
+          const response = await fetch(
+            "https://aitechnologiya.store/webhook/alfa-payment",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            },
+          );
+
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok || data.error) {
+            showCheckoutError(
+              data.message ||
+                data.error ||
+                "Не удалось создать платёж.",
+            );
+            return;
+          }
+
+          if (!data.paymentUrl) {
+            showCheckoutError("Банк не вернул ссылку на оплату.");
+            return;
+          }
+
+          if (data.order_id) {
+            sessionStorage.setItem("last_order_id", data.order_id);
+          }
+
+          closeCheckoutContact();
+          openPaymentUrl(data.paymentUrl);
+        } catch (error) {
+          console.error("Payment error:", error);
+          showCheckoutError(
+            "Ошибка соединения при создании оплаты. Попробуйте ещё раз.",
+          );
+        } finally {
+          if (payButton) {
+            payButton.textContent = originalPayText;
+            payButton.disabled = false;
+          }
+          if (headerButton) {
+            headerButton.textContent = originalHeaderText;
+            headerButton.disabled = false;
+          }
+        }
+      }
+
+      async function handleBuy() {
+        return submitCheckoutOrder();
+      }
+
+      function openCheckout(total) {
+        const amount = toNumber(total);
+        if (!amount) {
+          openCheckoutContact();
+          showCheckoutError("Корзина пуста.");
+          return;
+        }
+
+        const items = buildCartItems();
+        if (!items.length) {
+          openCheckoutContact();
+          showCheckoutError("Добавьте букет в корзину.");
+          return;
+        }
 
         currentBouquet = {
-          id: "cart_" + Date.now(),
+          id: items.length === 1 ? items[0].id : "cart_" + Date.now(),
           name: items.map((item) => `${item.name} × ${item.qty}`).join("; "),
           price: amount,
           items: items,
@@ -2563,11 +2684,7 @@
           items_count: items.reduce((sum, item) => sum + item.qty, 0),
         };
 
-        if (isTelegramMiniApp) {
-          handleBuy();
-        } else {
-          openCheckoutContact();
-        }
+        openCheckoutContact();
       }
 
       function renderCurrentView() {
@@ -2967,14 +3084,7 @@
           .getElementById("checkoutForm")
           .addEventListener("submit", (event) => {
             event.preventDefault();
-            const customer = getSiteCustomer();
-            if (!customer.isValid) {
-              showCheckoutError("Заполните имя и телефон перед оплатой.");
-              return;
-            }
-            clearCheckoutError();
-            closeCheckoutContact();
-            handleBuy();
+            submitCheckoutOrder();
           });
       }
 

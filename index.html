@@ -2401,6 +2401,33 @@
         return String(value || "").replace(/[^\d+]/g, "");
       }
 
+      function normalizeRuPhone(input) {
+        const digits = String(input || "").replace(/\D/g, "");
+
+        let phone = digits;
+
+        if (phone.length === 10 && phone.startsWith("9")) {
+          phone = "7" + phone;
+        }
+
+        if (phone.length === 11 && phone.startsWith("8")) {
+          phone = "7" + phone.slice(1);
+        }
+
+        if (!(phone.length === 11 && phone.startsWith("7"))) {
+          return null;
+        }
+
+        return phone;
+      }
+
+      function formatRuPhone(phone) {
+        const p = String(phone || "").replace(/\D/g, "");
+        if (p.length !== 11) return phone;
+
+        return `+${p[0]} ${p.slice(1, 4)} ${p.slice(4, 7)}-${p.slice(7, 9)}-${p.slice(9, 11)}`;
+      }
+
       function getOrderSource() {
         const user = tg?.initDataUnsafe?.user;
         if (tg && user?.id) {
@@ -2525,6 +2552,8 @@
 
       async function submitCheckoutOrder() {
         const customer = getCheckoutCustomer();
+        const rawPhone = document.getElementById("checkoutPhone")?.value.trim() || "";
+        const normalizedPhone = normalizeRuPhone(rawPhone);
 
         if (!customer.name) {
           showCheckoutError("Укажите имя.");
@@ -2533,6 +2562,11 @@
 
         if (!customer.phone) {
           showCheckoutError("Укажите телефон.");
+          return;
+        }
+
+        if (!normalizedPhone) {
+          showCheckoutError("Введите корректный номер телефона. Например: +7 999 123-45-67");
           return;
         }
 
@@ -2572,7 +2606,8 @@
           telegram_username: source.telegram_username,
 
           customer_name: customer.name,
-          customer_phone: customer.phone,
+          customer_phone: normalizedPhone,
+          customer_phone_display: formatRuPhone(normalizedPhone),
           customer_email: customer.email,
           customer_comment: customer.comment,
 

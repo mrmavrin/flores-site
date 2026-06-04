@@ -737,6 +737,176 @@
         font-size: 13px;
       }
 
+      .delivery-screen {
+        grid-column: 1 / -1;
+        width: 100%;
+        display: grid;
+        gap: 14px;
+      }
+
+      .delivery-field {
+        position: relative;
+        display: grid;
+        gap: 8px;
+      }
+
+      .delivery-field label,
+      .delivery-label {
+        color: #7b8176;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .delivery-input {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid #eadfd4;
+        border-radius: 14px;
+        background: #fffdfb;
+        color: #364037;
+        padding: 0 14px;
+        font: inherit;
+        outline: none;
+      }
+
+      .delivery-input:focus {
+        border-color: var(--soft-green);
+        box-shadow: 0 0 0 3px rgba(142, 162, 132, 0.18);
+      }
+
+      .delivery-suggest {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 230px;
+        overflow: auto;
+        border: 1px solid #eadfd4;
+        border-radius: 14px;
+        background: #fffdfb;
+        box-shadow: var(--shadow-card);
+      }
+
+      .delivery-suggest.open {
+        display: block;
+      }
+
+      .delivery-suggest button {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid #f0e6dc;
+        background: transparent;
+        color: #364037;
+        padding: 12px 14px;
+        text-align: left;
+        font: inherit;
+      }
+
+      .delivery-suggest button:last-child {
+        border-bottom: 0;
+      }
+
+      .delivery-suggest small {
+        display: block;
+        margin-top: 3px;
+        color: #7b8176;
+      }
+
+      .delivery-map {
+        width: 100%;
+        height: 48vh;
+        min-height: 300px;
+        overflow: hidden;
+        border: 1px solid #eadfd4;
+        border-radius: 16px;
+        background: #f8f2eb;
+      }
+
+      .delivery-placeholder {
+        display: grid;
+        min-height: 180px;
+        place-items: center;
+        color: #7b8176;
+        text-align: center;
+        line-height: 1.45;
+        padding: 18px;
+      }
+
+      .delivery-actions {
+        display: grid;
+        gap: 10px;
+      }
+
+      .delivery-secondary {
+        border: 1px solid #eadfd4;
+        border-radius: 999px;
+        background: #fffdfb;
+        color: #687062;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 13px 18px;
+        cursor: pointer;
+      }
+
+      .delivery-row {
+        border: 1px solid #eadfd4;
+        border-radius: 14px;
+        background: #fffdfb;
+        padding: 13px 14px;
+      }
+
+      .delivery-value {
+        margin-top: 5px;
+        color: #364037;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .delivery-status {
+        border-radius: 14px;
+        background: #eef5eb;
+        color: #425143;
+        padding: 13px 14px;
+        line-height: 1.4;
+      }
+
+      .marker {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.25);
+        transform: translate(-50%, -50%);
+      }
+
+      .marker.shop {
+        background: #e9a88e;
+      }
+
+      .marker.client {
+        background: var(--soft-green);
+      }
+
+      .marker.courier {
+        background: #65b57a;
+        animation: courierPulse 1.6s ease-in-out infinite;
+      }
+
+      @keyframes courierPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+
+        50% {
+          transform: translate(-50%, -50%) scale(1.12);
+        }
+      }
+
       .checkout-overlay {
         position: fixed;
         inset: 0;
@@ -1715,7 +1885,7 @@
         <span class="nav-icon">🛍</span>
         <span>Корзина <span class="nav-counter" id="cartCount">0</span></span>
       </button>
-      <button class="nav-btn" data-nav="about" type="button">
+      <button class="nav-btn" data-nav="delivery" type="button">
         <span class="nav-icon nav-icon-delivery" aria-hidden="true">
           <svg viewBox="0 0 24 24" role="img" focusable="false">
             <path d="M3 7h11v8H3z" />
@@ -1925,6 +2095,11 @@
 
     <script>
       const SHEET_ID = "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc";
+      const N8N_BASE = "https://aitechnologiya.store";
+      const YANDEX_API_KEY = "YANDEX_API_KEY"; // REPLACE
+      const YANDEX_MAPS_KEY = "YANDEX_MAPS_KEY"; // REPLACE
+      const DEFAULT_SHOP_COORDS = { lat: 53.523861, lon: 49.317078 };
+      const DELIVERY_POLL_INTERVAL_MS = 10000;
 
       const tg = window.Telegram?.WebApp;
       if (tg) {

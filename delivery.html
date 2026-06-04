@@ -916,15 +916,23 @@
             return;
           }
 
-          tg.CloudStorage.getItem(key, (error, value) => {
-            resolve(error ? localStorage.getItem(key) : value);
-          });
+          try {
+            tg.CloudStorage.getItem(key, (error, value) => {
+              resolve(error ? localStorage.getItem(key) : value);
+            });
+          } catch (error) {
+            resolve(localStorage.getItem(key));
+          }
         });
       }
 
       function cloudSet(key, value) {
         localStorage.setItem(key, value);
-        tg?.CloudStorage?.setItem(key, value, () => {});
+        try {
+          tg?.CloudStorage?.setItem(key, value, () => {});
+        } catch (error) {
+          // localStorage above is the fallback for Telegram contexts without CloudStorage.
+        }
       }
 
       function saveDeliveryDraft() {

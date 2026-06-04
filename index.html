@@ -2562,6 +2562,21 @@
       function renderDeliveryView() {
         const catalog = document.getElementById("catalog");
         const pickup = defaultPickupAddress || "Адрес магазина уточняется";
+        const orderId = getActiveOrderId();
+
+        if (orderId) {
+          catalog.innerHTML = `<div class="delivery-card">
+            <h3 class="delivery-title">Доставка</h3>
+            <div class="delivery-pill">Активный заказ</div>
+            <p style="margin-top:12px">Заказ <strong>${escapeHtml(orderId)}</strong> принят. Можно выбрать адрес и продолжить оформление доставки.</p>
+            <div class="delivery-address"><strong>Точка отправки:</strong><br>${escapeHtml(pickup)}</div>
+            <div class="delivery-actions" style="margin-top:14px">
+              <button class="main-cta" type="button" onclick="openDeliveryForOrder('${escapeHtml(orderId)}')">Продолжить доставку</button>
+            </div>
+          </div>`;
+          return;
+        }
+
         catalog.innerHTML = `<div class="delivery-card">
           <h3 class="delivery-title">Доставка</h3>
           <div class="delivery-pill">Яндекс Курьер API</div>
@@ -2741,6 +2756,70 @@
         window.location.href = paymentUrl;
       }
 
+      function deliveryUrl(orderId) {
+        return `delivery.html?order=${encodeURIComponent(orderId)}`;
+      }
+
+      function openDeliveryForOrder(orderId) {
+        if (!orderId) return;
+        window.location.href = deliveryUrl(orderId);
+      }
+
+      function cloudSet(key, value) {
+        localStorage.setItem(key, value);
+        try {
+          tg?.CloudStorage?.setItem(key, value, () => {});
+        } catch (error) {
+          // localStorage above covers browser and Telegram contexts without CloudStorage.
+        }
+      }
+
+      function cloudGet(key) {
+        return new Promise((resolve) => {
+          if (!tg?.CloudStorage) {
+            resolve(localStorage.getItem(key));
+            return;
+          }
+
+          try {
+            tg.CloudStorage.getItem(key, (error, value) => {
+              resolve(error ? localStorage.getItem(key) : value);
+            });
+          } catch (error) {
+            resolve(localStorage.getItem(key));
+          }
+        });
+      }
+
+      function rememberActiveOrder(orderId) {
+        const normalized = String(orderId || "").trim();
+        if (!normalized) return;
+        sessionStorage.setItem("last_order_id", normalized);
+        cloudSet("active_order", normalized);
+        cloudSet("delivery_step", "address");
+      }
+
+      function getActiveOrderId() {
+        const params = new URLSearchParams(window.location.search);
+        const startParam = tg?.initDataUnsafe?.start_param || "";
+        return (
+          params.get("order") ||
+          params.get("order_id") ||
+          (String(startParam).startsWith("o") ? startParam : "") ||
+          localStorage.getItem("active_order") ||
+          sessionStorage.getItem("last_order_id") ||
+          ""
+        ).trim();
+      }
+
+      async function hydrateActiveOrderFromCloud() {
+        if (getActiveOrderId()) return;
+        const orderId = String((await cloudGet("active_order")) || "").trim();
+        if (!orderId) return;
+        localStorage.setItem("active_order", orderId);
+        if (currentView === "delivery") renderCurrentView();
+      }
+
       async function submitCheckoutOrder() {
         const customer = getCheckoutCustomer();
         const rawPhone = document.getElementById("checkoutPhone")?.value.trim() || "";
@@ -2867,7 +2946,7 @@
           }
 
           if (data.order_id) {
-            sessionStorage.setItem("last_order_id", data.order_id);
+            rememberActiveOrder(data.order_id);
           }
 
           closeCheckoutContact();
@@ -3345,6 +3424,7 @@
           buildGroupFilters();
           buildFilters();
           renderCurrentView();
+          hydrateActiveOrderFromCloud();
         } catch (error) {
           document.getElementById("catalog").innerHTML =
             `<div class="empty">Не удалось загрузить витрину.<br>${error.message}</div>`;
@@ -3437,6 +3517,7 @@
         window.history.replaceState({}, "", window.location.pathname);
 
         if (status === "paid") {
+          rememberActiveOrder(orderId);
           sessionStorage.removeItem("last_order_id");
 
           if (tg) {
@@ -3510,6 +3591,7 @@
         if (!payment) return;
 
         if (payment === "success") {
+          rememberActiveOrder(orderId);
           showPaymentResult({
             title: "Оплата принята",
             text: orderId
@@ -3531,7 +3613,7 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      function showPaymentResult({ title, text }) {
+      function showPaymentResult({ title, text, orderId = "" }) {
         const modal = document.createElement("div");
 
         modal.style.position = "fixed";
@@ -3545,6 +3627,24 @@
 
         const safeTitle = escapeHtml(title);
         const safeText = escapeHtml(text);
+        const isPaymentSuccess =
+          new URLSearchParams(window.location.search).get("payment") === "success";
+        const modalOrderId = orderId || (isPaymentSuccess ? getActiveOrderId() : "");
+        const safeOrderId = escapeHtml(modalOrderId);
+        const deliveryButton = safeOrderId
+          ? `<button id="openDeliveryModalBtn" style="
+              width: 100%;
+              margin: 0 0 10px;
+              border: none;
+              border-radius: 999px;
+              background: linear-gradient(130deg, var(--soft-green), #7f9574);
+              color: #f8f5ee;
+              padding: 13px 18px;
+              font-weight: 700;
+              font-size: 15px;
+              cursor: pointer;
+            ">Оформить доставку</button>`
+          : "";
 
         modal.innerHTML = `
           <div style="
@@ -3570,6 +3670,8 @@
               line-height: 1.45;
             ">${safeText}</p>
 
+            ${deliveryButton}
+
             <button id="closePaymentModalBtn" style="
               width: 100%;
               margin-top: 0;
@@ -3591,6 +3693,12 @@
           .getElementById("closePaymentModalBtn")
           ?.addEventListener("click", () => {
             modal.remove();
+          });
+
+        document
+          .getElementById("openDeliveryModalBtn")
+          ?.addEventListener("click", () => {
+            openDeliveryForOrder(orderId || getActiveOrderId());
           });
       }
 

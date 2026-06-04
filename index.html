@@ -2179,6 +2179,17 @@
         });
       }
 
+      const CARD_TITLE_LIMIT = 30;
+      const CARD_DESC_LIMIT = 160;
+
+      function limitCardText(value, maxLength) {
+        const text = String(value || "").trim();
+        if (text.length <= maxLength) return text;
+
+        const suffix = "...";
+        return `${text.slice(0, maxLength - suffix.length).trimEnd()}${suffix}`;
+      }
+
       function cardTemplate(item) {
         const grad = getGradient(item._idx);
         const status = item._status;
@@ -2192,6 +2203,9 @@
              <div class="media-fallback" style="display:none;background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`
           : `<div class="media-fallback" style="background:linear-gradient(145deg,${grad[0]},${grad[1]})">${grad[2]}</div>`;
 
+        const title = limitCardText(item.name, CARD_TITLE_LIMIT);
+        const description = limitCardText(item.descriptionmini, CARD_DESC_LIMIT);
+
         return `<article class="card ${dimmed}" onclick="openBouquet('${item.id}')">
           <div class="card-media">
             ${mediaHtml}
@@ -2202,8 +2216,8 @@
             ${cardBadge(status)}
           </div>
           <div class="card-body">
-            <h3 class="card-title">${item.name}</h3>
-            ${item.descriptionmini ? `<div class="card-desc">${String(item.descriptionmini).slice(0, 28)}</div>` : ""}
+            <h3 class="card-title">${title}</h3>
+            ${description ? `<div class="card-desc">${description}</div>` : ""}
             <div class="card-price">${toNumber(item.price).toLocaleString("ru-RU")} ₽</div>
           </div>
         </article>`;

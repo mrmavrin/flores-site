@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Bloomé | Доставка</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --text: #222222;
+        --hint: #707579;
+        --link: #2481cc;
+        --button: #2481cc;
+        --button-text: #ffffff;
+        --secondary-bg: #f4f4f5;
+        --section-bg: #ffffff;
+        --border: rgba(112, 117, 121, 0.22);
+        --danger: #d14b43;
+        --success: #2e9f64;
+        --footer-height: 92px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      body {
+        padding: 18px 16px calc(var(--footer-height) + 18px);
+      }
+
+      .screen {
+        display: none;
+        min-height: calc(100vh - var(--footer-height) - 36px);
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .top {
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 27px;
+        line-height: 1.12;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin-top: 8px;
+        color: var(--hint);
+        line-height: 1.45;
+      }
+
+      .field {
+        position: relative;
+        margin: 16px 0 12px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--hint);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      input {
+        width: 100%;
+        min-height: 48px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--section-bg);
+        color: var(--text);
+        padding: 0 14px;
+        font: inherit;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: var(--link);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--link) 18%, transparent);
+      }
+
+      .suggest-list {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 240px;
+        overflow: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--section-bg);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.13);
+      }
+
+      .suggest-list.open {
+        display: block;
+      }
+
+      .suggest-item {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        color: var(--text);
+        padding: 12px 14px;
+        text-align: left;
+        font: inherit;
+      }
+
+      .suggest-item:last-child {
+        border-bottom: 0;
+      }
+
+      .suggest-item small {
+        display: block;
+        margin-top: 3px;
+        color: var(--hint);
+      }
+
+      .map {
+        width: 100%;
+        height: 50vh;
+        min-height: 310px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--secondary-bg);
+      }
+
+      .map-placeholder,
+      .loading {
+        display: grid;
+        min-height: 180px;
+        place-items: center;
+        color: var(--hint);
+        text-align: center;
+        line-height: 1.45;
+        padding: 18px;
+      }
+
+      .summary {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .row {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--section-bg);
+        padding: 13px 14px;
+      }
+
+      .row-label {
+        color: var(--hint);
+        font-size: 13px;
+      }
+
+      .row-value {
+        margin-top: 5px;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+      }
+
+      .status-line {
+        margin-top: 14px;
+        border-radius: 14px;
+        background: var(--secondary-bg);
+        color: var(--text);
+        padding: 13px 14px;
+        line-height: 1.4;
+      }
+
+      .footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 30;
+        min-height: var(--footer-height);
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+        background: color-mix(in srgb, var(--bg) 94%, transparent);
+        backdrop-filter: blur(18px);
+      }
+
+      .secondary-btn {
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--secondary-bg);
+        color: var(--link);
+        font: inherit;
+        font-weight: 600;
+      }
+
+      .secondary-btn.hidden {
+        display: none;
+      }
+
+      .error-card {
+        margin-top: 22px;
+        border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border));
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--danger) 9%, var(--section-bg));
+        color: var(--text);
+        padding: 16px;
+        line-height: 1.45;
+      }
+
+      .marker {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 5px 16px rgba(0, 0, 0, 0.25);
+        transform: translate(-50%, -50%);
+      }
+
+      .marker.shop {
+        background: #e9a88e;
+      }
+
+      .marker.client {
+        background: var(--button);
+      }
+
+      .marker.courier {
+        background: #65b57a;
+        animation: courierPulse 1.6s ease-in-out infinite;
+      }
+
+      @keyframes courierPulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+
+        50% {
+          transform: translate(-50%, -50%) scale(1.12);
+        }
+      }
+
+      @supports not (color: color-mix(in srgb, white, black)) {
+        input:focus {
+          box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.18);
+        }
+
+        .footer {
+          background: var(--bg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="screen" id="screen-address">
+        <div class="top">
+          <h1>Куда доставить букет?</h1>
+          <div class="subtitle" id="addressSubtitle">Загружаем заказ...</div>
+        </div>
+
+        <div class="field">
+          <label for="addressInput">Адрес доставки</label>
+          <input
+            id="addressInput"
+            type="text"
+            autocomplete="off"
+            inputmode="text"
+            placeholder="Введите улицу, дом, квартиру"
+          />
+          <div class="suggest-list" id="suggestList"></div>
+        </div>
+
+        <div class="map" id="addressMap">
+          <div class="map-placeholder">Загружаем карту...</div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-confirm">
+        <div class="top">
+          <h1>Проверьте доставку</h1>
+          <div class="subtitle">Курьер привезет букет после оформления.</div>
+        </div>
+
+        <div class="summary">
+          <div class="row">
+            <div class="row-label">Букет</div>
+            <div class="row-value" id="confirmBouquet">-</div>
+          </div>
+          <div class="row">
+            <div class="row-label">Адрес доставки</div>
+            <div class="row-value" id="confirmAddress">-</div>
+          </div>
+          <div class="row">
+            <div class="row-label">Стоимость доставки</div>
+            <div class="row-value">рассчитывается</div>
+          </div>
+          <div class="row">
+            <div class="row-label">Способ оплаты</div>
+            <div class="row-value">Картой курьеру при получении</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen" id="screen-tracking">
+        <div class="top">
+          <h1>Курьер в пути</h1>
+          <div class="subtitle" id="trackingSubtitle">Следим за доставкой.</div>
+        </div>
+
+        <div class="map" id="trackingMap">
+          <div class="map-placeholder">Загружаем карту...</div>
+        </div>
+        <div class="status-line" id="courierStatus">Уточняем статус курьера...</div>
+      </section>
+
+      <section class="screen" id="screen-error">
+        <div class="top">
+          <h1>Что-то пошло не так</h1>
+        </div>
+        <div class="error-card" id="errorText">Ошибка загрузки</div>
+      </section>
+    </main>
+
+    <div class="footer">
+      <button class="secondary-btn hidden" id="secondaryButton" type="button">
+        Изменить адрес
+      </button>
+    </div>
+
+    <script>
+      const YANDEX_API_KEY = "YANDEX_API_KEY"; // REPLACE
+      const YANDEX_MAPS_KEY = "YANDEX_MAPS_KEY"; // REPLACE
+      const N8N_BASE = "https://flores.aitechnologiya.ru";
+      const DEFAULT_SHOP_COORDS = { lat: 55.751244, lon: 37.618423 }; // REPLACE
+      const POLL_INTERVAL_MS = 10000;
+
+      const tg = window.Telegram?.WebApp;
+      const state = {
+        orderId: "",
+        order: null,
+        deliveryAddress: "",
+        deliveryCoords: null,
+        shopCoords: DEFAULT_SHOP_COORDS,
+        currentScreen: "",
+        mapsReady: null,
+        maps: {
+          address: null,
+          tracking: null,
+        },
+        markers: {
+          shopAddress: null,
+          clientAddress: null,
+          shopTracking: null,
+          clientTracking: null,
+          courier: null,
+        },
+        pollTimer: null,
+        mainHandler: null,
+        suggestController: null,
+      };
+
+      const screens = {
+        address: document.getElementById("screen-address"),
+        confirm: document.getElementById("screen-confirm"),
+        tracking: document.getElementById("screen-tracking"),
+        error: document.getElementById("screen-error"),
+      };
+      const secondaryButton = document.getElementById("secondaryButton");
+
+      initTelegram();
+      applyTelegramTheme();
+      window.addEventListener("DOMContentLoaded", init);
+      tg?.onEvent?.("themeChanged", applyTelegramTheme);
+
+      function initTelegram() {
+        tg?.ready?.();
+        tg?.expand?.();
+      }
+
+      async function init() {
+        state.orderId = new URLSearchParams(window.location.search).get("order") || "";
+
+        if (!state.orderId.trim()) {
+          showError("Номер заказа не найден");
+          return;
+        }
+
+        try {
+          showLoading("Загружаем заказ...");
+          state.order = await fetchOrder(state.orderId);
+          state.shopCoords = normalizeCoords(
+            state.order.shop_coordinates || state.order.shop_coords,
+            DEFAULT_SHOP_COORDS,
+          );
+
+          cloudSet("active_order", state.orderId);
+          restoreDeliveryDraft();
+
+          const savedStep = await cloudGet("delivery_step");
+          if (savedStep === "delivery_created") {
+            showScreen("tracking");
+          } else if (savedStep === "address_confirmed" && state.deliveryAddress) {
+            showScreen("confirm");
+          } else {
+            showScreen("address");
+          }
+        } catch (error) {
+          showError(networkMessage(error, "Не удалось загрузить заказ"));
+        }
+      }
+
+      function initAddressEvents() {
+        const input = document.getElementById("addressInput");
+        input.addEventListener("input", onAddressInput);
+        input.addEventListener("focus", () => {
+          if (document.getElementById("suggestList").children.length) {
+            document.getElementById("suggestList").classList.add("open");
+          }
+        });
+        document.addEventListener("click", (event) => {
+          if (!event.target.closest(".field")) closeSuggest();
+        });
+      }
+
+      initAddressEvents();
+
+      function applyTelegramTheme() {
+        const params = tg?.themeParams || {};
+        const colorScheme = tg?.colorScheme || "light";
+        const fallbackBg = colorScheme === "dark" ? "#1f1f1f" : "#ffffff";
+        const fallbackText = colorScheme === "dark" ? "#f5f5f5" : "#222222";
+
+        setVar("--bg", params.bg_color || fallbackBg);
+        setVar("--text", params.text_color || fallbackText);
+        setVar("--hint", params.hint_color || "#707579");
+        setVar("--link", params.link_color || "#2481cc");
+        setVar("--button", params.button_color || "#2481cc");
+        setVar("--button-text", params.button_text_color || "#ffffff");
+        setVar("--secondary-bg", params.secondary_bg_color || (colorScheme === "dark" ? "#2c2c2e" : "#f4f4f5"));
+        setVar("--section-bg", params.section_bg_color || params.bg_color || fallbackBg);
+      }
+
+      function setVar(name, value) {
+        document.documentElement.style.setProperty(name, value);
+      }
+
+      function showScreen(name) {
+        state.currentScreen = name;
+        Object.entries(screens).forEach(([screenName, el]) => {
+          el.classList.toggle("active", screenName === name);
+        });
+        stopPolling();
+        configureButtons(name);
+
+        if (name === "address") renderAddressScreen();
+        if (name === "confirm") renderConfirmScreen();
+        if (name === "tracking") renderTrackingScreen();
+      }
+
+      function showLoading(message) {
+        hideMainButton();
+        secondaryButton.classList.add("hidden");
+        screens.address.classList.add("active");
+        document.getElementById("addressSubtitle").textContent = message;
+      }
+
+      function configureButtons(screen) {
+        removeMainHandler();
+        secondaryButton.classList.add("hidden");
+        secondaryButton.onclick = null;
+
+        if (screen === "address") {
+          setMainButton("Подтвердить адрес", confirmAddress, Boolean(state.deliveryAddress));
+        } else if (screen === "confirm") {
+          setMainButton("Оформить доставку", createDelivery, true);
+          secondaryButton.textContent = "Изменить адрес";
+          secondaryButton.classList.remove("hidden");
+          secondaryButton.onclick = () => showScreen("address");
+        } else if (screen === "tracking") {
+          setMainButton("Закрыть", closeApp, true);
+        } else if (screen === "error") {
+          setMainButton("Закрыть", closeApp, true);
+        }
+      }
+
+      function setMainButton(text, handler, isActive) {
+        if (!tg?.MainButton) {
+          secondaryButton.textContent = text;
+          secondaryButton.classList.remove("hidden");
+          secondaryButton.disabled = !isActive;
+          secondaryButton.onclick = isActive ? handler : null;
+          return;
+        }
+
+        state.mainHandler = handler;
+        tg.MainButton.setText(text);
+        tg.MainButton.onClick(handler);
+        if (isActive) tg.MainButton.enable();
+        else tg.MainButton.disable();
+        tg.MainButton.show();
+      }
+
+      function updateMainButtonEnabled(isActive) {
+        if (tg?.MainButton) {
+          if (isActive) tg.MainButton.enable();
+          else tg.MainButton.disable();
+        } else {
+          secondaryButton.disabled = !isActive;
+        }
+      }
+
+      function removeMainHandler() {
+        if (tg?.MainButton && state.mainHandler) {
+          tg.MainButton.offClick(state.mainHandler);
+        }
+        state.mainHandler = null;
+      }
+
+      function hideMainButton() {
+        removeMainHandler();
+        tg?.MainButton?.hide();
+      }
+
+      async function renderAddressScreen() {
+        document.getElementById("addressSubtitle").textContent =
+          state.order?.bouquet_name ? `Букет: ${state.order.bouquet_name}` : "Выберите адрес доставки";
+        document.getElementById("addressInput").value = state.deliveryAddress;
+        updateMainButtonEnabled(Boolean(state.deliveryAddress));
+        await initAddressMap();
+      }
+
+      function renderConfirmScreen() {
+        document.getElementById("confirmBouquet").textContent =
+          state.order?.bouquet_name || "Букет";
+        document.getElementById("confirmAddress").textContent =
+          state.deliveryAddress || "Адрес не выбран";
+      }
+
+      async function renderTrackingScreen() {
+        document.getElementById("trackingSubtitle").textContent =
+          state.order?.bouquet_name ? `Букет: ${state.order.bouquet_name}` : "Следим за доставкой.";
+        await initTrackingMap();
+        startPolling();
+        pollCourierPosition();
+      }
+
+      async function fetchOrder(orderId) {
+        const url = `${N8N_BASE}/webhook/get-order?order_id=${encodeURIComponent(orderId)}`;
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error(`Заказ не найден или недоступен (${response.status})`);
+        return response.json();
+      }
+
+      async function createDelivery() {
+        if (!state.deliveryAddress || !state.deliveryCoords) return;
+
+        try {
+          setMainButtonProgress(true);
+          const response = await fetch(`${N8N_BASE}/webhook/create-delivery`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              order_id: state.orderId,
+              delivery_address: state.deliveryAddress,
+              coordinates: {
+                lat: state.deliveryCoords.lat,
+                lon: state.deliveryCoords.lon,
+              },
+            }),
+          });
+
+          if (!response.ok) throw new Error(`Сервер доставки ответил ${response.status}`);
+          cloudSet("delivery_step", "delivery_created");
+          showScreen("tracking");
+        } catch (error) {
+          showError(networkMessage(error, "Не удалось оформить доставку"));
+        } finally {
+          setMainButtonProgress(false);
+        }
+      }
+
+      function confirmAddress() {
+        if (!state.deliveryAddress || !state.deliveryCoords) return;
+        saveDeliveryDraft();
+        cloudSet("delivery_step", "address_confirmed");
+        showScreen("confirm");
+      }
+
+      function closeApp() {
+        tg?.close?.();
+      }
+
+      async function onAddressInput(event) {
+        const query = event.target.value.trim();
+        state.deliveryAddress = "";
+        state.deliveryCoords = null;
+        saveDeliveryDraft();
+        updateMainButtonEnabled(false);
+
+        if (query.length < 3) {
+          closeSuggest();
+          return;
+        }
+
+        try {
+          const items = await fetchSuggest(query);
+          renderSuggest(items);
+        } catch (error) {
+          renderSuggest([{ title: "Не удалось загрузить подсказки", subtitle: "Проверьте ключ API или сеть", disabled: true }]);
+        }
+      }
+
+      async function fetchSuggest(query) {
+        if (state.suggestController) state.suggestController.abort();
+        state.suggestController = new AbortController();
+
+        const url = new URL("https://suggest-maps.yandex.ru/v1/suggest");
+        url.searchParams.set("apikey", YANDEX_API_KEY);
+        url.searchParams.set("text", query);
+        url.searchParams.set("lang", "ru_RU");
+        url.searchParams.set("results", "6");
+
+        const response = await fetch(url, { signal: state.suggestController.signal });
+        if (!response.ok) throw new Error("Suggest API недоступен");
+        const data = await response.json();
+        return (data.results || []).map(normalizeSuggestItem).filter(Boolean);
+      }
+
+      function normalizeSuggestItem(item) {
+        const title = item.title?.text || item.title || item.name || "";
+        const subtitle = item.subtitle?.text || item.subtitle || item.description || "";
+        const coords = extractCoords(item);
+        if (!title) return null;
+        return { title, subtitle, coords };
+      }
+
+      function renderSuggest(items) {
+        const list = document.getElementById("suggestList");
+        list.innerHTML = "";
+
+        items.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "suggest-item";
+          button.disabled = Boolean(item.disabled);
+          button.innerHTML = `${escapeHtml(item.title)}${item.subtitle ? `<small>${escapeHtml(item.subtitle)}</small>` : ""}`;
+          button.addEventListener("click", () => selectAddress(item));
+          list.appendChild(button);
+        });
+
+        list.classList.toggle("open", items.length > 0);
+      }
+
+      async function selectAddress(item) {
+        const address = [item.title, item.subtitle].filter(Boolean).join(", ");
+        document.getElementById("addressInput").value = address;
+        closeSuggest();
+
+        state.deliveryAddress = address;
+        state.deliveryCoords = item.coords || (await geocodeAddress(address));
+        if (!state.deliveryCoords) {
+          showError("Не удалось определить координаты адреса. Попробуйте выбрать другой адрес.");
+          return;
+        }
+
+        saveDeliveryDraft();
+        updateMainButtonEnabled(true);
+        await initAddressMap();
+        moveMarker("clientAddress", state.deliveryCoords);
+        fitAddressMap();
+      }
+
+      async function geocodeAddress(address) {
+        const url = new URL("https://geocode-maps.yandex.ru/v1/");
+        url.searchParams.set("apikey", YANDEX_API_KEY);
+        url.searchParams.set("geocode", address);
+        url.searchParams.set("format", "json");
+        url.searchParams.set("lang", "ru_RU");
+
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const data = await response.json();
+        const pos = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos;
+        if (!pos) return null;
+        const [lon, lat] = pos.split(" ").map(Number);
+        return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
+      }
+
+      function closeSuggest() {
+        document.getElementById("suggestList").classList.remove("open");
+      }
+
+      async function loadYandexMaps() {
+        if (window.ymaps3) {
+          await window.ymaps3.ready;
+          return window.ymaps3;
+        }
+
+        if (state.mapsReady) return state.mapsReady;
+
+        state.mapsReady = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = `https://api-maps.yandex.ru/v3/?apikey=${encodeURIComponent(YANDEX_MAPS_KEY)}&lang=ru_RU`;
+          script.async = true;
+          script.onload = async () => {
+            try {
+              await window.ymaps3.ready;
+              resolve(window.ymaps3);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          script.onerror = () => reject(new Error("Не удалось загрузить Яндекс.Карты"));
+          document.head.appendChild(script);
+        });
+
+        return state.mapsReady;
+      }
+
+      async function initAddressMap() {
+        if (state.maps.address) return;
+        try {
+          const ymaps3 = await loadYandexMaps();
+          const container = document.getElementById("addressMap");
+          container.innerHTML = "";
+          state.maps.address = createMap(ymaps3, container, state.shopCoords, 12);
+          state.markers.shopAddress = addMarker(state.maps.address, state.shopCoords, "shop", "🏠");
+
+          if (state.deliveryCoords) {
+            state.markers.clientAddress = addMarker(state.maps.address, state.deliveryCoords, "client", "📍");
+            fitAddressMap();
+          }
+        } catch (error) {
+          showMapError("addressMap", "Карта пока недоступна. Проверьте ключ Yandex Maps API.");
+        }
+      }
+
+      async function initTrackingMap() {
+        if (state.maps.tracking) return;
+        try {
+          const ymaps3 = await loadYandexMaps();
+          const container = document.getElementById("trackingMap");
+          container.innerHTML = "";
+          const center = state.deliveryCoords || state.shopCoords;
+          state.maps.tracking = createMap(ymaps3, container, center, 12);
+          state.markers.shopTracking = addMarker(state.maps.tracking, state.shopCoords, "shop", "🌷");
+
+          if (state.deliveryCoords) {
+            state.markers.clientTracking = addMarker(state.maps.tracking, state.deliveryCoords, "client", "📍");
+          }
+
+          state.markers.courier = addMarker(state.maps.tracking, state.shopCoords, "courier", "💐");
+          fitTrackingMap();
+        } catch (error) {
+          showMapError("trackingMap", "Карта пока недоступна. Статус доставки продолжит обновляться.");
+        }
+      }
+
+      function createMap(ymaps3, container, center, zoom) {
+        const {
+          YMap,
+          YMapDefaultSchemeLayer,
+          YMapDefaultFeaturesLayer,
+        } = ymaps3;
+        const map = new YMap(container, {
+          location: {
+            center: [center.lon, center.lat],
+            zoom,
+          },
+        });
+        map.addChild(new YMapDefaultSchemeLayer());
+        map.addChild(new YMapDefaultFeaturesLayer());
+        return map;
+      }
+
+      function addMarker(map, coords, type, icon) {
+        const { YMapMarker } = window.ymaps3;
+        const element = document.createElement("div");
+        element.className = `marker ${type}`;
+        element.textContent = icon;
+        const marker = new YMapMarker({ coordinates: [coords.lon, coords.lat] }, element);
+        map.addChild(marker);
+        return marker;
+      }
+
+      function moveMarker(name, coords) {
+        const marker = state.markers[name];
+        if (marker) {
+          marker.update({ coordinates: [coords.lon, coords.lat] });
+          return;
+        }
+
+        if (name === "clientAddress" && state.maps.address) {
+          state.markers.clientAddress = addMarker(state.maps.address, coords, "client", "📍");
+        }
+      }
+
+      function fitAddressMap() {
+        const map = state.maps.address;
+        if (!map) return;
+
+        const points = [state.shopCoords, state.deliveryCoords].filter(Boolean);
+        if (points.length === 1) {
+          map.update({ location: { center: [points[0].lon, points[0].lat], zoom: 13 } });
+          return;
+        }
+
+        map.update({ location: boundsLocation(points) });
+      }
+
+      function fitTrackingMap() {
+        const map = state.maps.tracking;
+        if (!map) return;
+        const points = [state.shopCoords, state.deliveryCoords].filter(Boolean);
+        map.update({ location: boundsLocation(points) });
+      }
+
+      function boundsLocation(points) {
+        const lats = points.map((point) => point.lat);
+        const lons = points.map((point) => point.lon);
+        return {
+          bounds: [
+            [Math.min(...lons), Math.min(...lats)],
+            [Math.max(...lons), Math.max(...lats)],
+          ],
+          easing: "ease-in-out",
+          duration: 400,
+        };
+      }
+
+      function showMapError(id, message) {
+        document.getElementById(id).innerHTML = `<div class="map-placeholder">${escapeHtml(message)}</div>`;
+      }
+
+      function startPolling() {
+        stopPolling();
+        state.pollTimer = window.setInterval(pollCourierPosition, POLL_INTERVAL_MS);
+      }
+
+      function stopPolling() {
+        if (state.pollTimer) window.clearInterval(state.pollTimer);
+        state.pollTimer = null;
+      }
+
+      async function pollCourierPosition() {
+        try {
+          const url = `${N8N_BASE}/webhook/courier-position?order_id=${encodeURIComponent(state.orderId)}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`Статус курьера недоступен (${response.status})`);
+          const data = await response.json();
+          const coords = normalizeCoords(data, null);
+
+          if (coords && state.markers.courier) {
+            state.markers.courier.update({ coordinates: [coords.lon, coords.lat] });
+          }
+
+          document.getElementById("courierStatus").textContent = courierStatusText(data.status);
+        } catch (error) {
+          document.getElementById("courierStatus").textContent =
+            "Не удалось обновить позицию курьера. Попробуем еще раз через несколько секунд.";
+        }
+      }
+
+      function courierStatusText(status) {
+        const normalized = String(status || "").toLowerCase();
+        const map = {
+          going_to_shop: "Курьер едет в магазин",
+          to_shop: "Курьер едет в магазин",
+          picked_up: "Курьер забрал букет",
+          bouquet_picked: "Курьер забрал букет",
+          nearby: "Курьер рядом",
+          near_client: "Курьер рядом",
+        };
+        return map[normalized] || "Курьер едет в магазин";
+      }
+
+      function showError(message) {
+        stopPolling();
+        document.getElementById("errorText").textContent = message;
+        showScreen("error");
+      }
+
+      function cloudGet(key) {
+        return new Promise((resolve) => {
+          if (!tg?.CloudStorage) {
+            resolve(localStorage.getItem(key));
+            return;
+          }
+
+          tg.CloudStorage.getItem(key, (error, value) => {
+            resolve(error ? localStorage.getItem(key) : value);
+          });
+        });
+      }
+
+      function cloudSet(key, value) {
+        localStorage.setItem(key, value);
+        tg?.CloudStorage?.setItem(key, value, () => {});
+      }
+
+      function saveDeliveryDraft() {
+        localStorage.setItem(
+          `delivery_draft_${state.orderId}`,
+          JSON.stringify({
+            address: state.deliveryAddress,
+            coords: state.deliveryCoords,
+          }),
+        );
+      }
+
+      function restoreDeliveryDraft() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(`delivery_draft_${state.orderId}`) || "{}");
+          state.deliveryAddress = saved.address || "";
+          state.deliveryCoords = normalizeCoords(saved.coords, null);
+        } catch (error) {
+          state.deliveryAddress = "";
+          state.deliveryCoords = null;
+        }
+      }
+
+      function normalizeCoords(value, fallback) {
+        if (!value) return fallback;
+
+        if (Array.isArray(value) && value.length >= 2) {
+          const lon = Number(value[0]);
+          const lat = Number(value[1]);
+          return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : fallback;
+        }
+
+        if (typeof value === "string") {
+          const parts = value.split(/[,\s]+/).map(Number).filter(Number.isFinite);
+          if (parts.length >= 2) return { lat: parts[0], lon: parts[1] };
+          return fallback;
+        }
+
+        const lat = Number(value.lat ?? value.latitude);
+        const lon = Number(value.lon ?? value.lng ?? value.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : fallback;
+      }
+
+      function extractCoords(item) {
+        return normalizeCoords(
+          item.coordinates ||
+            item.coords ||
+            item.geometry?.coordinates ||
+            item.geometry ||
+            item.position,
+          null,
+        );
+      }
+
+      function networkMessage(error, fallback) {
+        if (!navigator.onLine) return "Нет подключения к интернету. Проверьте сеть и попробуйте снова.";
+        return error?.message ? `${fallback}: ${error.message}` : fallback;
+      }
+
+      function setMainButtonProgress(isProgress) {
+        if (!tg?.MainButton) return;
+        if (isProgress) tg.MainButton.showProgress(false);
+        else tg.MainButton.hideProgress();
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    </script>
+  </body>
+</html>

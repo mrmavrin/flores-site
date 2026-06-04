@@ -2096,8 +2096,8 @@
     <script>
       const SHEET_ID = "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc";
       const N8N_BASE = "https://aitechnologiya.store";
-      const YANDEX_API_KEY = "YANDEX_API_KEY"; // REPLACE
-      const YANDEX_MAPS_KEY = "YANDEX_MAPS_KEY"; // REPLACE
+      const YANDEX_API_KEY = "0b71e2cc-2dbc-473a-bbbe-d5a05b6c58a9"; // REPLACE
+      const YANDEX_MAPS_KEY = "3c63301b-195d-4a66-a34e-a95f99ba6e03"; // REPLACE
       const DEFAULT_SHOP_COORDS = { lat: 53.523861, lon: 49.317078 };
       const DELIVERY_POLL_INTERVAL_MS = 10000;
 
@@ -2431,7 +2431,7 @@
         if (!service) return;
         const hidden =
           currentView === "cart" ||
-          currentView === "about" ||
+          currentView === "delivery" ||
           currentView === "info";
         service.classList.toggle("hidden", hidden);
       }
@@ -2441,7 +2441,7 @@
         if (!filters) return;
         const hideFilters =
           currentView === "cart" ||
-          currentView === "about" ||
+          currentView === "delivery" ||
           currentView === "info";
         filters.classList.toggle("hidden", hideFilters);
       }
@@ -2930,7 +2930,7 @@
           updateHeaderPayButton();
           return;
         }
-        if (currentView === "about") {
+        if (currentView === "delivery") {
           renderDeliveryView();
           updateHeaderPayButton();
           return;

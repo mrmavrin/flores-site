@@ -946,7 +946,12 @@
             state.markers.courier.update({ coordinates: [coords.lon, coords.lat] });
           }
 
-          document.getElementById("courierStatus").textContent = courierStatusText(data.status);
+          const status = String(data.status || "").toLowerCase();
+          document.getElementById("courierStatus").textContent = courierStatusText(status);
+          if (status === "delivered") {
+            stopPolling();
+            clearActiveOrder();
+          }
         } catch (error) {
           document.getElementById("courierStatus").textContent =
             "Не удалось обновить позицию курьера. Попробуем еще раз через несколько секунд.";
@@ -960,8 +965,14 @@
           to_shop: "Курьер едет в магазин",
           picked_up: "Курьер забрал букет",
           bouquet_picked: "Курьер забрал букет",
+          delivering: "Курьер везёт букет получателю",
           nearby: "Курьер рядом",
           near_client: "Курьер рядом",
+          delivered: "Букет доставлен",
+          recipient_not_available: "Получателя нет на месте, уточняем вручение",
+          left_at_door: "Букет оставлен по согласованию",
+          returned_to_shop: "Курьер возвращает букет в магазин",
+          delivery_rescheduled: "Доставка перенесена",
         };
         return map[normalized] || "Курьер едет в магазин";
       }
@@ -996,6 +1007,21 @@
         } catch (error) {
           // localStorage above is the fallback for Telegram contexts without CloudStorage.
         }
+      }
+
+      function cloudRemove(key) {
+        localStorage.removeItem(key);
+        try {
+          tg?.CloudStorage?.removeItem(key, () => {});
+        } catch (error) {
+          // localStorage above is the fallback for Telegram contexts without CloudStorage.
+        }
+      }
+
+      function clearActiveOrder() {
+        cloudRemove("active_order");
+        cloudRemove("delivery_step");
+        localStorage.removeItem(`delivery_draft_${state.orderId}`);
       }
 
       function saveDeliveryDraft() {

@@ -1,0 +1,176 @@
+{
+  "name": "Florimoda - Workflow 4: Telegram approval callbacks",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "telegram-approval",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "telegram-webhook",
+      "name": "Telegram updates",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "telegram-approval"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Заказы",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "get-orders",
+      "name": "Get orders",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [240, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1GWAdyAg64ZHXwba",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const BOT_TOKEN = $env.TELEGRAM_BOT_TOKEN;\nconst FLORIST_CHAT_IDS = ['125048853', '435672235'];\nconst update = $('Telegram updates').item.json.body || $('Telegram updates').item.json;\nconst rows = $input.all().map(item => item.json);\n\nfunction escapeHtml(value) {\n  return String(value || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nasync function telegram(method, body) {\n  if (!BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN is not set');\n  return await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://api.telegram.org/bot${BOT_TOKEN}/${method}`,\n    body,\n    json: true,\n  });\n}\n\nasync function notifyAdmins(text) {\n  const sent = [];\n  for (const chatId of FLORIST_CHAT_IDS) {\n    const result = await telegram.call(this, 'sendMessage', {\n      chat_id: chatId,\n      text,\n      parse_mode: 'HTML',\n      disable_web_page_preview: true,\n    });\n    sent.push({ type: 'admin', chat_id: chatId, ok: result.ok === true });\n  }\n  return sent;\n}\n\nconst callback = update.callback_query;\nconst message = update.message;\n\nif (callback?.data) {\n  const [action, orderId] = String(callback.data).split(':');\n  const row = rows.find(r => String(r.order_id || '').trim() === String(orderId || '').trim());\n\n  if (!row) {\n    await telegram.call(this, 'answerCallbackQuery', {\n      callback_query_id: callback.id,\n      text: 'Заказ не найден',\n      show_alert: true,\n    });\n    return [{ json: { ok: false, ignored: true, reason: 'order_not_found' } }];\n  }\n\n  if (action === 'approve') {\n    await telegram.call(this, 'answerCallbackQuery', {\n      callback_query_id: callback.id,\n      text: 'Спасибо, заказ одобрен',\n    });\n    await telegram.call(this, 'sendMessage', {\n      chat_id: callback.message.chat.id,\n      text: `✅ Заказ ${orderId} одобрен. Передаём флористу и готовим доставку.`,\n    });\n    const sent = await notifyAdmins([\n      '✅ <b>Клиент одобрил фото букета</b>',\n      '',\n      `Заказ: <code>${escapeHtml(orderId)}</code>`,\n      `Клиент: ${escapeHtml(row.customer_name || '-')}`,\n    ].join('\\n'));\n    return [{ json: {\n      ok: true,\n      order_id: orderId,\n      order_status: 'approved',\n      notes: `${row.notes || ''}\\napproved_at=${new Date().toISOString()}`.trim(),\n      sent,\n    }}];\n  }\n\n  if (action === 'revision') {\n    await telegram.call(this, 'answerCallbackQuery', {\n      callback_query_id: callback.id,\n      text: 'Напишите, что нужно изменить',\n    });\n    await telegram.call(this, 'sendMessage', {\n      chat_id: callback.message.chat.id,\n      text: `✏️ Напишите одним сообщением, что изменить в заказе ${orderId}.`,\n    });\n    return [{ json: {\n      ok: true,\n      order_id: orderId,\n      order_status: 'revision_waiting_comment',\n      notes: `${row.notes || ''}\\nrevision_requested_at=${new Date().toISOString()}`.trim(),\n      sent: [],\n    }}];\n  }\n}\n\nif (message?.text) {\n  const chatId = String(message.chat.id || '');\n  const text = String(message.text || '').trim();\n  const row = rows\n    .filter(r => String(r.telegram_id || '').trim() === chatId)\n    .reverse()\n    .find(r => String(r.order_status || '').trim() === 'revision_waiting_comment');\n\n  if (!row) {\n    return [{ json: { ok: true, ignored: true, reason: 'no_revision_waiting_comment' } }];\n  }\n\n  await telegram.call(this, 'sendMessage', {\n    chat_id: chatId,\n    text: 'Спасибо, передали замечания флористу.',\n  });\n\n  const sent = await notifyAdmins([\n    '✏️ <b>Клиент просит изменить букет</b>',\n    '',\n    `Заказ: <code>${escapeHtml(row.order_id)}</code>`,\n    `Клиент: ${escapeHtml(row.customer_name || '-')}`,\n    '',\n    '<b>Замечания:</b>',\n    escapeHtml(text),\n  ].join('\\n'));\n\n  return [{ json: {\n    ok: true,\n    order_id: row.order_id,\n    order_status: 'revision_requested',\n    notes: `${row.notes || ''}\\nrevision_comment=${text}\\nrevision_comment_at=${new Date().toISOString()}`.trim(),\n    sent,\n  }}];\n}\n\nreturn [{ json: { ok: true, ignored: true, reason: 'unsupported_update' } }];"
+      },
+      "id": "handle-update",
+      "name": "Handle update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "has-order-id",
+              "leftValue": "={{ $json.order_id || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "has-status",
+              "leftValue": "={{ $json.order_status || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "should-update-order",
+      "name": "Should update order?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 0]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Заказы",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_id": "={{ $json.order_id }}",
+            "order_status": "={{ $json.order_status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": ["order_id"],
+          "schema": [
+            { "id": "order_id", "displayName": "order_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "order_status", "displayName": "order_status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "notes", "displayName": "notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-order",
+      "name": "Update order",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [720, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1GWAdyAg64ZHXwba",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 0]
+    }
+  ],
+  "connections": {
+    "Telegram updates": {
+      "main": [[{ "node": "Get orders", "type": "main", "index": 0 }]]
+    },
+    "Get orders": {
+      "main": [[{ "node": "Handle update", "type": "main", "index": 0 }]]
+    },
+    "Handle update": {
+      "main": [[{ "node": "Should update order?", "type": "main", "index": 0 }]]
+    },
+    "Should update order?": {
+      "main": [
+        [{ "node": "Update order", "type": "main", "index": 0 }],
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update order": {
+      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-06-05T00:00:00.000Z",
+  "versionId": "telegram-approval-import"
+}

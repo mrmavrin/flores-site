@@ -1,0 +1,199 @@
+{
+  "name": "Florimoda - Workflow 3: Photo approval upload",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "order-photo-upload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "photo-upload-webhook",
+      "name": "Florist uploads photo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "order-photo-upload"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Заказы",
+          "mode": "name"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "order_id",
+              "lookupValue": "={{ $json.body.order_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "find-order",
+      "name": "Find order",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [240, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1GWAdyAg64ZHXwba",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const upload = $('Florist uploads photo').item.json.body || {};\nconst row = $input.first()?.json || {};\n\nconst orderId = String(upload.order_id || row.order_id || '').trim();\nconst photoUrl = String(upload.photo_url || '').trim();\nconst caption = String(upload.caption || '').trim();\nconst approvalMinutes = Number(upload.approval_minutes || 20);\n\nif (!orderId || !photoUrl) {\n  return [{ json: { statusCode: 400, error: 'order_id and photo_url are required' } }];\n}\n\nif (!row.order_id) {\n  return [{ json: { statusCode: 404, error: 'Order not found', order_id: orderId } }];\n}\n\nconst deadline = new Date(Date.now() + approvalMinutes * 60 * 1000).toISOString();\nconst deliveryUrl = `https://flores.aitechnologiya.ru/delivery.html?order=${encodeURIComponent(orderId)}`;\nconst approvalNote = [\n  `photo_url=${photoUrl}`,\n  `approval_deadline=${deadline}`,\n  caption ? `caption=${caption}` : '',\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    statusCode: 200,\n    order_id: orderId,\n    telegram_id: row.telegram_id || '',\n    telegram_username: row.telegram_username || '',\n    customer_name: row.customer_name || '',\n    bouquet_name: row.bouquet_name || row.items_text || 'Заказ',\n    photo_url: photoUrl,\n    caption,\n    approval_deadline: deadline,\n    delivery_url: deliveryUrl,\n    order_status: 'awaiting_client_approval',\n    notes: approvalNote,\n    message_text: row.message_text || '',\n  }\n}];"
+      },
+      "id": "prepare-approval",
+      "name": "Prepare approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "has-order-id",
+              "leftValue": "={{ $json.order_id || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "has-no-error",
+              "leftValue": "={{ $json.error || '' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "should-update-order",
+      "name": "Should update order?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [600, 0]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Заказы",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "order_id": "={{ $json.order_id }}",
+            "order_status": "={{ $json.order_status }}",
+            "notes": "={{ $json.notes }}"
+          },
+          "matchingColumns": ["order_id"],
+          "schema": [
+            { "id": "order_id", "displayName": "order_id", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": true },
+            { "id": "order_status", "displayName": "order_status", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false },
+            { "id": "notes", "displayName": "notes", "required": false, "defaultMatch": false, "display": true, "type": "string", "canBeUsedToMatch": false }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-order-awaiting",
+      "name": "Update order awaiting approval",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [720, 0],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "1GWAdyAg64ZHXwba",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const BOT_TOKEN = $env.TELEGRAM_BOT_TOKEN;\nconst FLORIST_CHAT_IDS = ['125048853', '435672235'];\nconst data = $('Prepare approval').item.json;\n\nfunction escapeHtml(value) {\n  return String(value || '')\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;');\n}\n\nasync function telegram(method, body) {\n  if (!BOT_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN is not set');\n  return await this.helpers.httpRequest({\n    method: 'POST',\n    url: `https://api.telegram.org/bot${BOT_TOKEN}/${method}`,\n    body,\n    json: true,\n  });\n}\n\nconst clientCaption = [\n  '🌸 <b>Ваш букет готов к проверке</b>',\n  '',\n  `Заказ: <code>${escapeHtml(data.order_id)}</code>`,\n  `Букет: ${escapeHtml(data.bouquet_name)}`,\n  data.caption ? `Комментарий флориста: ${escapeHtml(data.caption)}` : '',\n  '',\n  'Пожалуйста, подтвердите фото или попросите изменения.',\n].filter(Boolean).join('\\n');\n\nconst sent = [];\n\nif (data.telegram_id) {\n  const result = await telegram.call(this, 'sendPhoto', {\n    chat_id: data.telegram_id,\n    photo: data.photo_url,\n    caption: clientCaption,\n    parse_mode: 'HTML',\n    reply_markup: {\n      inline_keyboard: [[\n        { text: '✅ Одобрить', callback_data: `approve:${data.order_id}` },\n        { text: '✏️ Нужны изменения', callback_data: `revision:${data.order_id}` },\n      ]],\n    },\n  });\n  sent.push({ type: 'client_photo', chat_id: data.telegram_id, ok: result.ok === true });\n}\n\nconst adminText = [\n  '📸 Фото букета отправлено клиенту',\n  '',\n  `Заказ: ${data.order_id}`,\n  `Клиент: ${data.customer_name || '-'}`,\n  `Дедлайн автоодобрения: ${data.approval_deadline}`,\n].join('\\n');\n\nfor (const chatId of FLORIST_CHAT_IDS) {\n  const result = await telegram.call(this, 'sendMessage', {\n    chat_id: chatId,\n    text: adminText,\n    disable_web_page_preview: true,\n  });\n  sent.push({ type: 'admin_notice', chat_id: chatId, ok: result.ok === true });\n}\n\nreturn [{ json: { ok: true, order_id: data.order_id, sent } }];"
+      },
+      "id": "send-telegram-approval",
+      "name": "Send Telegram approval",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.statusCode || 200 }}"
+        }
+      },
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1200, 0]
+    }
+  ],
+  "connections": {
+    "Florist uploads photo": {
+      "main": [[{ "node": "Find order", "type": "main", "index": 0 }]]
+    },
+    "Find order": {
+      "main": [[{ "node": "Prepare approval", "type": "main", "index": 0 }]]
+    },
+    "Prepare approval": {
+      "main": [[{ "node": "Should update order?", "type": "main", "index": 0 }]]
+    },
+    "Should update order?": {
+      "main": [
+        [{ "node": "Update order awaiting approval", "type": "main", "index": 0 }],
+        [{ "node": "Respond", "type": "main", "index": 0 }]
+      ]
+    },
+    "Update order awaiting approval": {
+      "main": [[{ "node": "Send Telegram approval", "type": "main", "index": 0 }]]
+    },
+    "Send Telegram approval": {
+      "main": [[{ "node": "Respond", "type": "main", "index": 0 }]]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2026-06-05T00:00:00.000Z",
+  "versionId": "photo-approval-import"
+}

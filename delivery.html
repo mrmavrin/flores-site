@@ -824,7 +824,6 @@
 
         map.addChild(
           new YMapListener({
-            layer: "any",
             onClick: async (object, event) => {
               const coords = normalizeCoords(event?.coordinates, null);
               if (!coords) return;
@@ -837,14 +836,12 @@
       async function selectMapPoint(coords) {
         closeSuggest();
         const found = await reverseGeocodeBuilding(coords);
-        if (!found?.address || !found?.coords) {
-          document.getElementById("addressSubtitle").textContent =
-            "Дом не найден. Тапните ближе к зданию или выберите адрес из подсказки.";
-          updateMainButtonEnabled(false);
-          return;
-        }
+        const address =
+          found?.address ||
+          `Точка на карте: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
+        const deliveryCoords = found?.coords || coords;
 
-        await applySelectedDeliveryPoint(found.address, found.coords);
+        await applySelectedDeliveryPoint(address, deliveryCoords);
       }
 
       async function reverseGeocodeBuilding(coords) {

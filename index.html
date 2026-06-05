@@ -748,6 +748,127 @@
         gap: 10px;
       }
 
+      .delivery-form {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .delivery-field {
+        position: relative;
+        display: grid;
+        gap: 7px;
+      }
+
+      .delivery-field label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .delivery-field input {
+        width: 100%;
+        min-height: 46px;
+        border: 1px solid #eadfd5;
+        border-radius: 14px;
+        background: #fffdfb;
+        color: var(--text);
+        padding: 0 13px;
+        font: inherit;
+        outline: none;
+      }
+
+      .delivery-field input:focus {
+        border-color: var(--soft-green);
+        box-shadow: 0 0 0 3px rgba(142, 162, 132, 0.18);
+      }
+
+      .delivery-suggest-list {
+        position: absolute;
+        z-index: 35;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        display: none;
+        max-height: 230px;
+        overflow: auto;
+        border: 1px solid #eadfd5;
+        border-radius: 14px;
+        background: #fffdfb;
+        box-shadow: 0 12px 26px rgba(90, 72, 56, 0.14);
+      }
+
+      .delivery-suggest-list.open {
+        display: block;
+      }
+
+      .delivery-suggest-item {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid #eadfd5;
+        background: transparent;
+        color: var(--text);
+        padding: 11px 13px;
+        text-align: left;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .delivery-suggest-item:last-child {
+        border-bottom: 0;
+      }
+
+      .delivery-suggest-item small {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+      }
+
+      .delivery-map {
+        width: 100%;
+        height: min(52vh, 420px);
+        min-height: 300px;
+        overflow: hidden;
+        border: 1px solid #eadfd5;
+        border-radius: 16px;
+        background: #f8f2eb;
+      }
+
+      .delivery-map-placeholder {
+        display: grid;
+        min-height: 240px;
+        place-items: center;
+        color: var(--muted);
+        padding: 18px;
+        text-align: center;
+      }
+
+      .delivery-marker {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 999px;
+        background: #fffdfb;
+        border: 2px solid var(--soft-green);
+        box-shadow: 0 8px 18px rgba(54, 64, 55, 0.18);
+        transform: translate(-50%, -100%);
+        font-size: 18px;
+      }
+
+      .delivery-marker.client {
+        border-color: var(--dust-rose);
+      }
+
+      .delivery-status {
+        margin-top: 12px;
+        border-radius: 14px;
+        background: #eef5eb;
+        color: #53644c;
+        padding: 12px 13px;
+        line-height: 1.45;
+      }
+
       .checkout-overlay {
         position: fixed;
         inset: 0;
@@ -1937,6 +2058,10 @@
     <script>
       const SHEET_ID = "1o1UPXWToQHUr1TGqScMEhdTjVMQ8yAqyw__XTlT_9Zc";
       const N8N_BASE = "https://aitechnologiya.store";
+      const YANDEX_MAPS_KEY = "3c63301b-195d-4a66-a34e-a95f99ba6e03";
+      const YANDEX_SUGGEST_KEY = "0b71e2cc-2dbc-473a-bbbe-d5a05b6c58a9";
+      const DELIVERY_MODE = "self";
+      const SHOP_COORDS = { lat: 53.523861, lon: 49.317078 };
 
       const tg = window.Telegram?.WebApp;
       if (tg) {
@@ -2398,28 +2523,25 @@
 
       function renderDeliveryView() {
         const catalog = document.getElementById("catalog");
-        const pickup = defaultPickupAddress || "Адрес магазина уточняется";
         const orderId = getActiveOrderId();
 
-        if (orderId) {
+        if (!orderId) {
           catalog.innerHTML = `<div class="delivery-card">
             <h3 class="delivery-title">Доставка</h3>
-            <div class="delivery-pill">Активный заказ</div>
-            <p style="margin-top:12px">Заказ <strong>${escapeHtml(orderId)}</strong> принят. Можно выбрать адрес и продолжить оформление доставки.</p>
-            <div class="delivery-address"><strong>Точка отправки:</strong><br>${escapeHtml(pickup)}</div>
-            <div class="delivery-actions" style="margin-top:14px">
-              <button class="main-cta" type="button" onclick="openDeliveryForOrder('${escapeHtml(orderId)}')">Продолжить доставку</button>
-            </div>
+            <div class="delivery-pill">Нет активного заказа</div>
+            <p style="margin-top:12px">После оплаты или одобрения букета здесь появится оформление доставки.</p>
+            <div class="delivery-address"><strong>Магазин:</strong><br>${escapeHtml(defaultPickupAddress || "улица 40 лет Победы, 104А, Тольятти")}</div>
           </div>`;
           return;
         }
 
-        catalog.innerHTML = `<div class="delivery-card">
+        deliveryState.orderId = orderId;
+        catalog.innerHTML = `<div class="delivery-card" id="deliveryPanel">
           <h3 class="delivery-title">Доставка</h3>
-          <div class="delivery-pill">Яндекс Курьер API</div>
-          <p style="margin-top:12px">Доставку планируем через интеграцию с Яндекс Курьер. После подтверждения заказа менеджер рассчитывает время и стоимость доставки автоматически.</p>
-          <div class="delivery-address"><strong>Точка отправки по умолчанию:</strong><br>${pickup}</div>
+          <div class="delivery-pill">Заказ ${escapeHtml(orderId)}</div>
+          <div class="delivery-status" id="deliveryStatus">Загружаем заказ...</div>
         </div>`;
+        initDeliveryFlow(orderId);
       }
 
       function renderInfoView() {
@@ -2593,13 +2715,10 @@
         window.location.href = paymentUrl;
       }
 
-      function deliveryUrl(orderId) {
-        return `delivery.html?order=${encodeURIComponent(orderId)}`;
-      }
-
       function openDeliveryForOrder(orderId) {
         if (!orderId) return;
-        window.location.href = deliveryUrl(orderId);
+        rememberActiveOrder(orderId);
+        setView("delivery");
       }
 
       function cloudSet(key, value) {
@@ -2639,14 +2758,23 @@
       function getActiveOrderId() {
         const params = new URLSearchParams(window.location.search);
         const startParam = tg?.initDataUnsafe?.start_param || "";
+        const startOrderId = parseStartParamOrder(startParam);
         return (
           params.get("order") ||
           params.get("order_id") ||
-          (String(startParam).startsWith("o") ? startParam : "") ||
+          startOrderId ||
           localStorage.getItem("active_order") ||
           sessionStorage.getItem("last_order_id") ||
           ""
         ).trim();
+      }
+
+      function parseStartParamOrder(value) {
+        const raw = String(value || "").trim();
+        if (!raw) return "";
+        if (raw.startsWith("o")) return raw;
+        const match = raw.match(/(?:^|[?&=_-])order(?:_id)?[=_-]?(o\d+)/i);
+        return match?.[1] || "";
       }
 
       async function hydrateActiveOrderFromCloud() {
@@ -2655,6 +2783,475 @@
         if (!orderId) return;
         localStorage.setItem("active_order", orderId);
         if (currentView === "delivery") renderCurrentView();
+      }
+
+      const deliveryState = {
+        orderId: "",
+        order: null,
+        address: "",
+        phone: "",
+        coords: null,
+        mapsReady: null,
+        map: null,
+        shopMarker: null,
+        clientMarker: null,
+        suggestController: null,
+      };
+
+      async function initDeliveryFlow(orderId) {
+        const panel = document.getElementById("deliveryPanel");
+        if (!panel || currentView !== "delivery") return;
+
+        try {
+          rememberActiveOrder(orderId);
+          restoreDeliveryDraft(orderId);
+          deliveryState.order = await fetchDeliveryOrder(orderId);
+          const savedStep = await cloudGet("delivery_step");
+
+          if (savedStep === "confirmed") {
+            renderDeliveryConfirmed();
+            return;
+          }
+
+          cloudSet("delivery_step", "address");
+          renderDeliveryAddress();
+        } catch (error) {
+          panel.innerHTML = `<h3 class="delivery-title">Доставка</h3>
+            <div class="delivery-pill">Заказ ${escapeHtml(orderId)}</div>
+            <div class="delivery-status">Не удалось загрузить заказ: ${escapeHtml(error.message || "ошибка")}</div>`;
+        }
+      }
+
+      async function fetchDeliveryOrder(orderId) {
+        const url = `${N8N_BASE}/webhook/get-order?order_id=${encodeURIComponent(orderId)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`сервер ответил ${response.status}`);
+        return response.json();
+      }
+
+      function renderDeliveryAddress() {
+        const panel = document.getElementById("deliveryPanel");
+        if (!panel) return;
+
+        const order = deliveryState.order || {};
+        const shopAddress =
+          order.shop_address || defaultPickupAddress || "улица 40 лет Победы, 104А, Тольятти";
+
+        panel.innerHTML = `<h3 class="delivery-title">Доставка</h3>
+          <div class="delivery-pill">Заказ ${escapeHtml(deliveryState.orderId)}</div>
+          <p style="margin-top:12px">${escapeHtml(order.bouquet_name || "Букет готовится к доставке")}</p>
+          <div class="delivery-address"><strong>Магазин:</strong><br>${escapeHtml(shopAddress)}</div>
+          <form class="delivery-form" id="deliveryForm" novalidate>
+            <div class="delivery-field">
+              <label for="deliveryAddressInput">Адрес доставки</label>
+              <input id="deliveryAddressInput" type="text" autocomplete="off" placeholder="Введите улицу и дом" value="${escapeHtml(deliveryState.address)}" />
+              <div class="delivery-suggest-list" id="deliverySuggestList"></div>
+            </div>
+            <div class="delivery-field">
+              <label for="deliveryPhoneInput">Телефон для курьера</label>
+              <input id="deliveryPhoneInput" type="tel" autocomplete="tel" placeholder="+7 999 123-45-67" value="${escapeHtml(deliveryState.phone)}" />
+            </div>
+            <div class="delivery-map" id="deliveryMap">
+              <div class="delivery-map-placeholder">Загружаем карту...</div>
+            </div>
+            <div class="delivery-status" id="deliveryStatus">${deliveryState.coords ? "Адрес выбран" : "Выберите адрес из подсказок или точку на карте."}</div>
+            <button class="main-cta" id="deliveryConfirmBtn" type="submit" ${deliveryCanSubmit() ? "" : "disabled"}>Подтвердить</button>
+          </form>`;
+
+        bindDeliveryEvents();
+        initDeliveryMap();
+      }
+
+      function bindDeliveryEvents() {
+        const form = document.getElementById("deliveryForm");
+        const addressInput = document.getElementById("deliveryAddressInput");
+        const phoneInput = document.getElementById("deliveryPhoneInput");
+
+        form?.addEventListener("submit", (event) => {
+          event.preventDefault();
+          createDeliveryFromIndex();
+        });
+
+        addressInput?.addEventListener("input", onDeliveryAddressInput);
+        addressInput?.addEventListener("focus", () => {
+          const list = document.getElementById("deliverySuggestList");
+          if (list?.children.length) list.classList.add("open");
+        });
+
+        phoneInput?.addEventListener("input", () => {
+          deliveryState.phone = phoneInput.value.trim();
+          saveDeliveryDraft();
+          updateDeliverySubmit();
+        });
+      }
+
+      async function onDeliveryAddressInput(event) {
+        const query = event.target.value.trim();
+        deliveryState.address = query;
+        deliveryState.coords = null;
+        saveDeliveryDraft();
+        updateDeliverySubmit();
+
+        if (query.length < 3) {
+          closeDeliverySuggest();
+          return;
+        }
+
+        try {
+          const items = await fetchDeliverySuggest(query);
+          renderDeliverySuggest(items);
+        } catch (error) {
+          renderDeliverySuggest([
+            { title: "Не удалось загрузить подсказки", subtitle: "Проверьте ключ API или сеть", disabled: true },
+          ]);
+        }
+      }
+
+      async function fetchDeliverySuggest(query) {
+        if (deliveryState.suggestController) deliveryState.suggestController.abort();
+        deliveryState.suggestController = new AbortController();
+
+        const url = new URL("https://suggest-maps.yandex.ru/v1/suggest");
+        url.searchParams.set("apikey", YANDEX_SUGGEST_KEY);
+        url.searchParams.set("text", query);
+        url.searchParams.set("lang", "ru_RU");
+        url.searchParams.set("results", "6");
+
+        const response = await fetch(url, { signal: deliveryState.suggestController.signal });
+        if (!response.ok) throw new Error("Suggest API недоступен");
+        const data = await response.json();
+        return (data.results || []).map(normalizeDeliverySuggestItem).filter(Boolean);
+      }
+
+      function normalizeDeliverySuggestItem(item) {
+        const title = item.title?.text || item.title || item.name || "";
+        const subtitle = item.subtitle?.text || item.subtitle || item.description || "";
+        const coords = normalizeDeliveryCoords(
+          item.coordinates || item.coords || item.geometry?.coordinates || item.geometry || item.position,
+          null,
+        );
+        if (!title) return null;
+        return { title, subtitle, coords };
+      }
+
+      function renderDeliverySuggest(items) {
+        const list = document.getElementById("deliverySuggestList");
+        if (!list) return;
+        list.innerHTML = "";
+
+        items.forEach((item) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "delivery-suggest-item";
+          button.disabled = Boolean(item.disabled);
+          button.innerHTML = `${escapeHtml(item.title)}${item.subtitle ? `<small>${escapeHtml(item.subtitle)}</small>` : ""}`;
+          button.addEventListener("click", () => selectDeliveryAddress(item));
+          list.appendChild(button);
+        });
+
+        list.classList.toggle("open", items.length > 0);
+      }
+
+      async function selectDeliveryAddress(item) {
+        const address = [item.title, item.subtitle].filter(Boolean).join(", ");
+        closeDeliverySuggest();
+        deliveryState.address = address;
+        deliveryState.coords = item.coords || (await geocodeDeliveryAddress(address));
+
+        if (!deliveryState.coords) {
+          setDeliveryStatus("Не удалось определить координаты адреса. Поставьте точку на карте.");
+          saveDeliveryDraft();
+          updateDeliverySubmit();
+          return;
+        }
+
+        applyDeliveryPoint(address, deliveryState.coords);
+      }
+
+      async function geocodeDeliveryAddress(address) {
+        const url = new URL("https://geocode-maps.yandex.ru/v1/");
+        url.searchParams.set("apikey", YANDEX_SUGGEST_KEY);
+        url.searchParams.set("geocode", address);
+        url.searchParams.set("format", "json");
+        url.searchParams.set("lang", "ru_RU");
+
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const data = await response.json();
+        const pos = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos;
+        if (!pos) return null;
+        const [lon, lat] = pos.split(" ").map(Number);
+        return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
+      }
+
+      async function reverseGeocodeDeliveryPoint(coords) {
+        const url = new URL("https://geocode-maps.yandex.ru/v1/");
+        url.searchParams.set("apikey", YANDEX_SUGGEST_KEY);
+        url.searchParams.set("geocode", `${coords.lon},${coords.lat}`);
+        url.searchParams.set("format", "json");
+        url.searchParams.set("lang", "ru_RU");
+        url.searchParams.set("kind", "house");
+        url.searchParams.set("results", "1");
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) return null;
+          const data = await response.json();
+          const geoObject = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
+          const address =
+            geoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+            [geoObject?.name, geoObject?.description].filter(Boolean).join(", ");
+          const pos = geoObject?.Point?.pos || "";
+          const [lon, lat] = pos.split(" ").map(Number);
+          const foundCoords = Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : coords;
+          return address ? { address, coords: foundCoords } : null;
+        } catch (error) {
+          return null;
+        }
+      }
+
+      function applyDeliveryPoint(address, coords) {
+        deliveryState.address = address;
+        deliveryState.coords = coords;
+
+        const addressInput = document.getElementById("deliveryAddressInput");
+        if (addressInput) addressInput.value = address;
+
+        saveDeliveryDraft();
+        setDeliveryStatus("Адрес выбран");
+        updateDeliverySubmit();
+        moveDeliveryClientMarker(coords);
+        fitDeliveryMap();
+      }
+
+      function closeDeliverySuggest() {
+        document.getElementById("deliverySuggestList")?.classList.remove("open");
+      }
+
+      async function loadDeliveryMaps() {
+        if (window.ymaps3) {
+          await window.ymaps3.ready;
+          return window.ymaps3;
+        }
+
+        if (deliveryState.mapsReady) return deliveryState.mapsReady;
+
+        deliveryState.mapsReady = new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = `https://api-maps.yandex.ru/v3/?apikey=${encodeURIComponent(YANDEX_MAPS_KEY)}&lang=ru_RU`;
+          script.async = true;
+          script.onload = async () => {
+            try {
+              await window.ymaps3.ready;
+              resolve(window.ymaps3);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          script.onerror = () => reject(new Error("Не удалось загрузить Яндекс.Карты"));
+          document.head.appendChild(script);
+        });
+
+        return deliveryState.mapsReady;
+      }
+
+      async function initDeliveryMap() {
+        const container = document.getElementById("deliveryMap");
+        if (!container) return;
+
+        try {
+          const ymaps3 = await loadDeliveryMaps();
+          container.innerHTML = "";
+          deliveryState.map = createDeliveryMap(ymaps3, container, SHOP_COORDS, 12);
+          attachDeliveryMapTap(ymaps3, deliveryState.map);
+          deliveryState.shopMarker = addDeliveryMarker(deliveryState.map, SHOP_COORDS, "shop", "🌸");
+          if (deliveryState.coords) {
+            deliveryState.clientMarker = addDeliveryMarker(deliveryState.map, deliveryState.coords, "client", "📍");
+            fitDeliveryMap();
+          }
+        } catch (error) {
+          container.innerHTML = `<div class="delivery-map-placeholder">Карта пока недоступна. Проверьте ключ Yandex Maps API.</div>`;
+        }
+      }
+
+      function createDeliveryMap(ymaps3, container, center, zoom) {
+        const { YMap, YMapDefaultSchemeLayer, YMapDefaultFeaturesLayer } = ymaps3;
+        const map = new YMap(container, {
+          location: { center: [center.lon, center.lat], zoom },
+        });
+        map.addChild(new YMapDefaultSchemeLayer());
+        map.addChild(new YMapDefaultFeaturesLayer());
+        return map;
+      }
+
+      function attachDeliveryMapTap(ymaps3, map) {
+        const { YMapListener } = ymaps3;
+        if (!YMapListener) return;
+
+        map.addChild(
+          new YMapListener({
+            onClick: async (event, mapEvent) => {
+              const coords = normalizeDeliveryCoords(
+                mapEvent?.coordinates || event?.coordinates,
+                null,
+              );
+              if (!coords) return;
+              closeDeliverySuggest();
+              const found = await reverseGeocodeDeliveryPoint(coords);
+              const address =
+                found?.address ||
+                `Точка на карте: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
+              applyDeliveryPoint(address, found?.coords || coords);
+            },
+          }),
+        );
+      }
+
+      function addDeliveryMarker(map, coords, type, icon) {
+        const { YMapMarker } = window.ymaps3;
+        const element = document.createElement("div");
+        element.className = `delivery-marker ${type}`;
+        element.textContent = icon;
+        const marker = new YMapMarker({ coordinates: [coords.lon, coords.lat] }, element);
+        map.addChild(marker);
+        return marker;
+      }
+
+      function moveDeliveryClientMarker(coords) {
+        if (!deliveryState.map) return;
+        if (deliveryState.clientMarker) {
+          deliveryState.clientMarker.update({ coordinates: [coords.lon, coords.lat] });
+          return;
+        }
+        deliveryState.clientMarker = addDeliveryMarker(deliveryState.map, coords, "client", "📍");
+      }
+
+      function fitDeliveryMap() {
+        if (!deliveryState.map || !deliveryState.coords) return;
+        const points = [SHOP_COORDS, deliveryState.coords];
+        const lats = points.map((point) => point.lat);
+        const lons = points.map((point) => point.lon);
+        deliveryState.map.update({
+          location: {
+            bounds: [
+              [Math.min(...lons), Math.min(...lats)],
+              [Math.max(...lons), Math.max(...lats)],
+            ],
+            easing: "ease-in-out",
+            duration: 400,
+          },
+        });
+      }
+
+      async function createDeliveryFromIndex() {
+        deliveryState.phone =
+          document.getElementById("deliveryPhoneInput")?.value.trim() || deliveryState.phone;
+
+        if (!deliveryCanSubmit()) {
+          setDeliveryStatus("Заполните адрес и телефон для курьера.");
+          return;
+        }
+
+        const button = document.getElementById("deliveryConfirmBtn");
+        if (button) button.disabled = true;
+        setDeliveryStatus("Оформляем доставку...");
+
+        try {
+          const response = await fetch(`${N8N_BASE}/webhook/create-delivery`, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=UTF-8" },
+            body: JSON.stringify({
+              order_id: deliveryState.orderId,
+              delivery_address: deliveryState.address,
+              coordinates: {
+                lat: deliveryState.coords.lat,
+                lon: deliveryState.coords.lon,
+              },
+              phone: deliveryState.phone,
+              delivery_type: DELIVERY_MODE,
+            }),
+          });
+
+          if (!response.ok) throw new Error(`сервер ответил ${response.status}`);
+          cloudSet("delivery_step", "confirmed");
+          saveDeliveryDraft();
+          renderDeliveryConfirmed();
+        } catch (error) {
+          setDeliveryStatus(`Не удалось оформить доставку: ${error.message || "ошибка"}`);
+          updateDeliverySubmit();
+        }
+      }
+
+      function renderDeliveryConfirmed() {
+        const panel = document.getElementById("deliveryPanel");
+        if (!panel) return;
+
+        const title = DELIVERY_MODE === "yandex" ? "Курьер назначен" : "Ждите звонка курьера";
+        const text =
+          DELIVERY_MODE === "yandex"
+            ? "Мы передали заказ в курьерскую службу. Статус доставки обновится после назначения."
+            : "Магазин получил адрес и телефон. Курьер свяжется с вами перед выездом.";
+
+        panel.innerHTML = `<h3 class="delivery-title">Доставка</h3>
+          <div class="delivery-pill">Заказ ${escapeHtml(deliveryState.orderId)}</div>
+          <div class="delivery-status"><strong>${escapeHtml(title)}</strong><br>${escapeHtml(text)}</div>
+          <div class="delivery-address"><strong>Адрес доставки:</strong><br>${escapeHtml(deliveryState.address || "Адрес сохранен")}</div>
+          <div class="delivery-actions" style="margin-top:14px">
+            <button class="main-cta" type="button" onclick="cloudSet('delivery_step','address'); renderDeliveryAddress();">Изменить адрес</button>
+          </div>`;
+      }
+
+      function deliveryCanSubmit() {
+        return Boolean(deliveryState.address && deliveryState.coords && deliveryState.phone);
+      }
+
+      function updateDeliverySubmit() {
+        const button = document.getElementById("deliveryConfirmBtn");
+        if (button) button.disabled = !deliveryCanSubmit();
+      }
+
+      function setDeliveryStatus(message) {
+        const status = document.getElementById("deliveryStatus");
+        if (status) status.textContent = message;
+      }
+
+      function saveDeliveryDraft() {
+        if (!deliveryState.orderId) return;
+        localStorage.setItem(
+          `delivery_draft_${deliveryState.orderId}`,
+          JSON.stringify({
+            address: deliveryState.address,
+            phone: deliveryState.phone,
+            coords: deliveryState.coords,
+          }),
+        );
+      }
+
+      function restoreDeliveryDraft(orderId) {
+        try {
+          const saved = JSON.parse(localStorage.getItem(`delivery_draft_${orderId}`) || "{}");
+          deliveryState.address = saved.address || "";
+          deliveryState.phone = saved.phone || "";
+          deliveryState.coords = normalizeDeliveryCoords(saved.coords, null);
+        } catch (error) {
+          deliveryState.address = "";
+          deliveryState.phone = "";
+          deliveryState.coords = null;
+        }
+      }
+
+      function normalizeDeliveryCoords(value, fallback) {
+        if (!value) return fallback;
+
+        if (Array.isArray(value) && value.length >= 2) {
+          const lon = Number(value[0]);
+          const lat = Number(value[1]);
+          return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : fallback;
+        }
+
+        const lat = Number(value.lat ?? value.latitude);
+        const lon = Number(value.lon ?? value.lng ?? value.longitude);
+        return Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : fallback;
       }
 
       async function submitCheckoutOrder() {
@@ -3473,6 +4070,7 @@
         document
           .getElementById("openDeliveryModalBtn")
           ?.addEventListener("click", () => {
+            modal.remove();
             openDeliveryForOrder(orderId || getActiveOrderId());
           });
       }

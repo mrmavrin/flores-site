@@ -302,6 +302,7 @@
         <div class="map" id="addressMap">
           <div class="map-placeholder">Загружаем карту...</div>
         </div>
+        <div class="subtitle" id="mapHint">Можно выбрать адрес из подсказок или поставить точку на карте.</div>
       </section>
 
       <section class="screen" id="screen-confirm">
@@ -688,14 +689,28 @@
         state.deliveryAddress = address;
         state.deliveryCoords = item.coords || (await geocodeAddress(address));
         if (!state.deliveryCoords) {
-          showError("Не удалось определить координаты адреса. Попробуйте выбрать другой адрес.");
+          document.getElementById("addressSubtitle").textContent =
+            "Не удалось определить точные координаты. Поставьте точку на карте.";
+          saveDeliveryDraft();
+          updateMainButtonEnabled(false);
+          await initAddressMap();
           return;
         }
+
+        await applySelectedDeliveryPoint(address, state.deliveryCoords);
+      }
+
+      async function applySelectedDeliveryPoint(address, coords) {
+        state.deliveryAddress = address;
+        state.deliveryCoords = coords;
+        document.getElementById("addressInput").value = address;
+        document.getElementById("addressSubtitle").textContent =
+          state.order?.bouquet_name ? `Букет: ${state.order.bouquet_name}` : "Адрес выбран";
 
         saveDeliveryDraft();
         updateMainButtonEnabled(true);
         await initAddressMap();
-        moveMarker("clientAddress", state.deliveryCoords);
+        moveMarker("clientAddress", coords);
         fitAddressMap();
       }
 
@@ -753,6 +768,7 @@
           const container = document.getElementById("addressMap");
           container.innerHTML = "";
           state.maps.address = createMap(ymaps3, container, state.shopCoords, 12);
+          attachAddressMapTap(ymaps3, state.maps.address);
           state.markers.shopAddress = addMarker(state.maps.address, state.shopCoords, "shop", "🏠");
 
           if (state.deliveryCoords) {
@@ -800,6 +816,53 @@
         map.addChild(new YMapDefaultSchemeLayer());
         map.addChild(new YMapDefaultFeaturesLayer());
         return map;
+      }
+
+      function attachAddressMapTap(ymaps3, map) {
+        const { YMapListener } = ymaps3;
+        if (!YMapListener) return;
+
+        map.addChild(
+          new YMapListener({
+            layer: "any",
+            onClick: async (object, event) => {
+              const coords = normalizeCoords(event?.coordinates, null);
+              if (!coords) return;
+              await selectMapPoint(coords);
+            },
+          }),
+        );
+      }
+
+      async function selectMapPoint(coords) {
+        closeSuggest();
+        const address =
+          (await reverseGeocodeCoords(coords)) ||
+          `Точка на карте: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
+
+        await applySelectedDeliveryPoint(address, coords);
+      }
+
+      async function reverseGeocodeCoords(coords) {
+        const url = new URL("https://geocode-maps.yandex.ru/v1/");
+        url.searchParams.set("apikey", YANDEX_API_KEY);
+        url.searchParams.set("geocode", `${coords.lon},${coords.lat}`);
+        url.searchParams.set("format", "json");
+        url.searchParams.set("lang", "ru_RU");
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) return "";
+          const data = await response.json();
+          const geoObject =
+            data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
+          return (
+            geoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+            [geoObject?.name, geoObject?.description].filter(Boolean).join(", ")
+          );
+        } catch (error) {
+          return "";
+        }
       }
 
       function addMarker(map, coords, type, icon) {

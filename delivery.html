@@ -836,32 +836,43 @@
 
       async function selectMapPoint(coords) {
         closeSuggest();
+        const found = await reverseGeocodeBuilding(coords);
         const address =
-          (await reverseGeocodeCoords(coords)) ||
+          found?.address ||
           `Точка на карте: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
+        const deliveryCoords = found?.coords || coords;
 
-        await applySelectedDeliveryPoint(address, coords);
+        await applySelectedDeliveryPoint(address, deliveryCoords);
       }
 
-      async function reverseGeocodeCoords(coords) {
+      async function reverseGeocodeBuilding(coords) {
         const url = new URL("https://geocode-maps.yandex.ru/v1/");
         url.searchParams.set("apikey", YANDEX_API_KEY);
         url.searchParams.set("geocode", `${coords.lon},${coords.lat}`);
         url.searchParams.set("format", "json");
         url.searchParams.set("lang", "ru_RU");
+        url.searchParams.set("kind", "house");
+        url.searchParams.set("results", "1");
 
         try {
           const response = await fetch(url);
-          if (!response.ok) return "";
+          if (!response.ok) return null;
           const data = await response.json();
           const geoObject =
             data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
-          return (
+          if (!geoObject) return null;
+
+          const pos = geoObject.Point?.pos || "";
+          const [lon, lat] = pos.split(" ").map(Number);
+          const buildingCoords =
+            Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
+          const address =
             geoObject?.metaDataProperty?.GeocoderMetaData?.text ||
-            [geoObject?.name, geoObject?.description].filter(Boolean).join(", ")
-          );
+            [geoObject?.name, geoObject?.description].filter(Boolean).join(", ");
+
+          return address ? { address, coords: buildingCoords } : null;
         } catch (error) {
-          return "";
+          return null;
         }
       }
 

@@ -824,8 +824,11 @@
 
         map.addChild(
           new YMapListener({
-            onClick: async (object, event) => {
-              const coords = normalizeCoords(event?.coordinates, null);
+            onClick: async (event, mapEvent) => {
+              const coords = normalizeCoords(
+                mapEvent?.coordinates || event?.coordinates,
+                null,
+              );
               if (!coords) return;
               await selectMapPoint(coords);
             },

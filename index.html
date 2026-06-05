@@ -3341,70 +3341,6 @@
         });
       });
 
-      // ── СТАТУС ПОСЛЕ ОПЛАТЫ ─────────────────────────────
-      function checkPaymentStatus() {
-        const params = new URLSearchParams(window.location.search);
-        const status = params.get("status");
-        const orderId =
-          params.get("order_id") || sessionStorage.getItem("last_order_id");
-
-        if (!status) return;
-
-        // Убираем параметры из URL
-        window.history.replaceState({}, "", window.location.pathname);
-
-        if (status === "paid") {
-          rememberActiveOrder(orderId);
-          sessionStorage.removeItem("last_order_id");
-
-          if (tg) {
-            tg.showPopup({
-              title: "✅ Оплата прошла!",
-              message:
-                "Ваш заказ принят. Флорист уже готовит букет — мы сообщим когда он будет готов.",
-              buttons: [{ type: "ok", text: "Отлично!" }],
-            });
-          } else {
-            showStatusBanner(
-              "success",
-              "✅ Оплата прошла! Заказ #" + (orderId || "") + " принят.",
-            );
-          }
-        }
-
-        if (status === "fail") {
-          if (tg) {
-            tg.showPopup({
-              title: "❌ Оплата не прошла",
-              message:
-                "Что-то пошло не так. Попробуйте ещё раз или выберите другой способ оплаты.",
-              buttons: [{ type: "ok", text: "Попробовать снова" }],
-            });
-          } else {
-            showStatusBanner(
-              "error",
-              "❌ Оплата не прошла. Попробуйте ещё раз.",
-            );
-          }
-        }
-      }
-
-      function showStatusBanner(type, message) {
-        const banner = document.createElement("div");
-        banner.style.cssText = `
-      position: fixed; top: 20px; left: 50%;
-    transform: translateX(-50%);
-    background: ${type === "success" ? "#4CAF50" : "#f44336"};
-      color: white; padding: 14px 24px;
-      border-radius: 12px; font-size: 15px; font-weight: 500;
-      z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-      max-width: 90vw; text-align: center;
-  `;
-        banner.textContent = message;
-        document.body.appendChild(banner);
-        setTimeout(() => banner.remove(), 5000);
-      }
-
       function escapeHtml(value) {
         return String(value ?? "").replace(
           /[&<>"']/g,
@@ -3423,17 +3359,19 @@
         const params = new URLSearchParams(window.location.search);
 
         const payment = params.get("payment");
-        const orderId = params.get("order_id");
+        const orderId =
+          params.get("order_id") || sessionStorage.getItem("last_order_id") || "";
 
         if (!payment) return;
 
         if (payment === "success") {
           rememberActiveOrder(orderId);
+          sessionStorage.removeItem("last_order_id");
           showPaymentResult({
-            title: "Оплата принята",
+            title: "Заказ создан",
             text: orderId
-              ? `Заказ ${orderId} создан. Мы проверяем оплату и передаём заказ флористу.`
-              : "Заказ создан. Мы проверяем оплату и передаём заказ флористу.",
+              ? `Заказ ${orderId} создан. Если оплата подтверждена банком, флорист приступит к сборке.`
+              : "Заказ создан. Если оплата подтверждена банком, флорист приступит к сборке.",
           });
         }
 
@@ -3541,7 +3479,6 @@
 
       setupNavigation();
       updateCounters();
-      checkPaymentStatus();
       document.addEventListener("DOMContentLoaded", handlePaymentReturn);
       loadData();
     </script>

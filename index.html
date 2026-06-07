@@ -2060,6 +2060,7 @@
       const N8N_BASE = "https://aitechnologiya.store";
       const YANDEX_MAPS_KEY = "3c63301b-195d-4a66-a34e-a95f99ba6e03";
       const YANDEX_SUGGEST_KEY = "0b71e2cc-2dbc-473a-bbbe-d5a05b6c58a9";
+      const YANDEX_GEOCODER_KEY = "38cf6e15-2e3b-40b0-9389-10f98428058c";
       const DELIVERY_MODE = "self";
       const SHOP_COORDS = { lat: 53.523861, lon: 49.317078 };
 
@@ -2956,7 +2957,14 @@
         const address = [item.title, item.subtitle].filter(Boolean).join(", ");
         closeDeliverySuggest();
         deliveryState.address = address;
-        deliveryState.coords = item.coords || (await geocodeDeliveryAddress(address));
+        try {
+          deliveryState.coords = item.coords || (await geocodeDeliveryAddress(address));
+        } catch (error) {
+          setDeliveryStatus(error.message || "Не удалось определить координаты адреса.");
+          saveDeliveryDraft();
+          updateDeliverySubmit();
+          return;
+        }
 
         if (!deliveryState.coords) {
           setDeliveryStatus("Не удалось определить координаты адреса. Поставьте точку на карте.");
@@ -2970,13 +2978,19 @@
 
       async function geocodeDeliveryAddress(address) {
         const url = new URL("https://geocode-maps.yandex.ru/v1/");
-        url.searchParams.set("apikey", YANDEX_SUGGEST_KEY);
+        url.searchParams.set("apikey", YANDEX_GEOCODER_KEY);
         url.searchParams.set("geocode", address);
         url.searchParams.set("format", "json");
         url.searchParams.set("lang", "ru_RU");
 
         const response = await fetch(url);
-        if (!response.ok) return null;
+        if (!response.ok) {
+          throw new Error(
+            response.status === 403
+              ? "Для определения адреса нужен ключ Yandex Geocoder API."
+              : `Геокодер ответил ${response.status}.`,
+          );
+        }
         const data = await response.json();
         const pos = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject?.Point?.pos;
         if (!pos) return null;
@@ -2986,7 +3000,7 @@
 
       async function reverseGeocodeDeliveryPoint(coords) {
         const url = new URL("https://geocode-maps.yandex.ru/v1/");
-        url.searchParams.set("apikey", YANDEX_SUGGEST_KEY);
+        url.searchParams.set("apikey", YANDEX_GEOCODER_KEY);
         url.searchParams.set("geocode", `${coords.lon},${coords.lat}`);
         url.searchParams.set("format", "json");
         url.searchParams.set("lang", "ru_RU");
@@ -2995,7 +3009,13 @@
 
         try {
           const response = await fetch(url);
-          if (!response.ok) return null;
+          if (!response.ok) {
+            throw new Error(
+              response.status === 403
+                ? "Для определения адреса нужен ключ Yandex Geocoder API."
+                : `Геокодер ответил ${response.status}.`,
+            );
+          }
           const data = await response.json();
           const geoObject = data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
           const address =
@@ -3006,7 +3026,7 @@
           const foundCoords = Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : coords;
           return address ? { address, coords: foundCoords } : null;
         } catch (error) {
-          return null;
+          throw error;
         }
       }
 
@@ -3097,11 +3117,22 @@
               );
               if (!coords) return;
               closeDeliverySuggest();
-              const found = await reverseGeocodeDeliveryPoint(coords);
-              const address =
-                found?.address ||
-                `Точка на карте: ${coords.lat.toFixed(6)}, ${coords.lon.toFixed(6)}`;
-              applyDeliveryPoint(address, found?.coords || coords);
+              setDeliveryStatus("Определяем адрес выбранной точки...");
+
+              try {
+                const found = await reverseGeocodeDeliveryPoint(coords);
+                if (!found?.address) {
+                  setDeliveryStatus(
+                    "Рядом с выбранной точкой не найден адрес. Выберите точку ближе к зданию.",
+                  );
+                  return;
+                }
+                applyDeliveryPoint(found.address, found.coords || coords);
+              } catch (error) {
+                setDeliveryStatus(
+                  error.message || "Не удалось определить адрес выбранной точки.",
+                );
+              }
             },
           }),
         );
@@ -3177,7 +3208,11 @@
           saveDeliveryDraft();
           renderDeliveryConfirmed();
         } catch (error) {
-          setDeliveryStatus(`Не удалось оформить доставку: ${error.message || "ошибка"}`);
+          const message =
+            error instanceof TypeError || /load failed|failed to fetch/i.test(error.message || "")
+              ? "Сервис доставки временно недоступен. Проверьте, что workflow create-delivery опубликован и принимает POST."
+              : `Не удалось оформить доставку: ${error.message || "ошибка"}`;
+          setDeliveryStatus(message);
           updateDeliverySubmit();
         }
       }

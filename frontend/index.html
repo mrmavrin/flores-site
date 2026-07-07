@@ -90,7 +90,7 @@
               Подберем композицию под бюджет, повод и настроение. Упаковка и
               стиль в единой эстетике витрины.
             </p>
-            <button class="main-cta" type="button" onclick="openBuilderSheet()">
+            <button class="main-cta" type="button">
               Собрать букет
             </button>
           </article>
@@ -124,12 +124,11 @@
       </button>
     </nav>
 
-    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+    <div class="overlay" id="overlay"></div>
 
     <div
       class="checkout-overlay"
       id="checkoutOverlay"
-      onclick="closeCheckoutContact()"
     ></div>
     <section class="checkout-modal" id="checkoutModal">
       <div class="checkout-head">
@@ -142,7 +141,6 @@
         <button
           class="checkout-close"
           type="button"
-          onclick="closeCheckoutContact()"
           aria-label="Закрыть"
         >
           ×
@@ -206,7 +204,6 @@
             class="sheet-carousel-btn prev"
             id="sheetPrevBtn"
             type="button"
-            onclick="slideSheet(-1)"
             aria-label="Предыдущий слайд"
           >
             ‹
@@ -215,7 +212,6 @@
             class="sheet-carousel-btn next"
             id="sheetNextBtn"
             type="button"
-            onclick="slideSheet(1)"
             aria-label="Следующий слайд"
           >
             ›
@@ -224,7 +220,6 @@
             <button
               class="sheet-round-btn"
               type="button"
-              onclick="closeSheet()"
             >
               ←
             </button>
@@ -232,7 +227,6 @@
               class="sheet-round-btn"
               type="button"
               id="sheetFavBtn"
-              onclick="toggleCurrentFavorite()"
             >
               ♡
             </button>
@@ -266,15 +260,14 @@
       <div class="sheet-actions" id="sheetActions">
         <div class="qty-row">
           <div class="qty" id="qtyWrap">
-            <button type="button" onclick="changeQty(-1)">−</button>
+            <button type="button">−</button>
             <span id="qtyValue">1</span>
-            <button type="button" onclick="changeQty(1)">+</button>
+            <button type="button">+</button>
           </div>
           <button
             class="main-cta-outline"
             id="ctaBtn"
             type="button"
-            onclick="handleAction()"
           >
             Добавить в корзину
           </button>
@@ -285,11 +278,10 @@
     <div
       class="builder-overlay"
       id="builderOverlay"
-      onclick="closeBuilder()"
     ></div>
     <section class="bsheet" id="builderSheet">
       <div class="bsheet-header">
-        <button class="bsheet-back" type="button" onclick="closeBuilder()">
+        <button class="bsheet-back" type="button">
           ←
         </button>
         <h3 class="bsheet-title">Собрать букет</h3>
@@ -311,7 +303,6 @@
           class="main-cta"
           id="builderCta"
           type="button"
-          onclick="submitBuilder()"
           style="width: 100%"
         >
           Отправить заявку

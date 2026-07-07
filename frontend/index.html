@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Bloomé | Цветочная витрина</title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+<div class="app">
+      <section class="welcome" id="welcomeScreen">
+        <article class="welcome-card">
+          <span class="welcome-flower f-1">✿</span>
+          <span class="welcome-flower f-2">❀</span>
+          <span class="welcome-flower f-3">✿</span>
+
+          <div class="welcome-copy">
+            <h1 class="brand">Bloomé</h1>
+            <div class="brand-note">цветы с душой</div>
+            <p class="welcome-text">
+              Авторские букеты<br />для особенных моментов
+            </p>
+          </div>
+
+          <div class="welcome-footer">
+            <p class="welcome-disclaimer">
+              Каждый букет собирается вручную, поэтому возможны лёгкие отличия
+              от фото на витрине. Это живая композиция в выбранной стилистике:
+              мы бережно сохраняем идею, цветовую гамму и характер букета.
+            </p>
+            <button class="welcome-btn" id="enterBtn">
+              Понимаю и согласен(а), продолжить
+            </button>
+            <p class="welcome-version">версия 0.2.8</p>
+          </div>
+        </article>
+      </section>
+
+      <main class="shell hidden" id="mainScreen">
+        <header class="header">
+          <div class="brand-row">
+            <div class="brand-block">
+              <h1>Bloomé</h1>
+              <p>Онлайн витрина</p>
+            </div>
+            <div class="header-actions">
+              <button class="header-pay-btn hidden" id="buyBtn" type="button">
+                Оплатить
+              </button>
+              <button
+                class="icon-btn"
+                id="headerInfoBtn"
+                type="button"
+                aria-label="Информация"
+              >
+                <svg viewBox="0 0 24 24" role="img" focusable="false">
+                  <circle cx="12" cy="12" r="9"></circle>
+                  <path d="M12 10v6"></path>
+                  <path d="M12 7.2h.01"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <section class="hero">
+            <h2>Выберите свой букет с душой <span>♥</span></h2>
+          </section>
+
+          <div class="filters" id="filters"></div>
+        </header>
+
+        <section class="catalog-wrap">
+          <div class="catalog" id="catalog">
+            <div class="loading">
+              <div class="spin">🌸</div>
+              <div style="margin-top: 8px">Собираем весеннюю витрину...</div>
+            </div>
+          </div>
+
+          <article class="service-card" id="serviceCard">
+            <h3>Букет на заказ</h3>
+            <p>
+              Подберем композицию под бюджет, повод и настроение. Упаковка и
+              стиль в единой эстетике витрины.
+            </p>
+            <button class="main-cta" type="button" onclick="openBuilderSheet()">
+              Собрать букет
+            </button>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav hidden" id="bottomNav">
+      <button class="nav-btn active" data-nav="home" type="button">
+        <span class="nav-icon">✿</span>
+        <span>Главная</span>
+      </button>
+      <button class="nav-btn" data-nav="fav" type="button">
+        <span class="nav-icon">♡</span>
+        <span>Избранное <span class="nav-counter" id="favCount">0</span></span>
+      </button>
+      <button class="nav-btn" data-nav="cart" type="button">
+        <span class="nav-icon">🛍</span>
+        <span>Корзина <span class="nav-counter" id="cartCount">0</span></span>
+      </button>
+      <button class="nav-btn" data-nav="delivery" type="button">
+        <span class="nav-icon nav-icon-delivery" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" focusable="false">
+            <path d="M3 7h11v8H3z" />
+            <path d="M14 10h3l3 3v2h-6z" />
+            <circle cx="8" cy="17" r="1.7" />
+            <circle cx="18" cy="17" r="1.7" />
+          </svg>
+        </span>
+        <span>Доставка</span>
+      </button>
+    </nav>
+
+    <div class="overlay" id="overlay" onclick="closeSheet()"></div>
+
+    <div
+      class="checkout-overlay"
+      id="checkoutOverlay"
+      onclick="closeCheckoutContact()"
+    ></div>
+    <section class="checkout-modal" id="checkoutModal">
+      <div class="checkout-head">
+        <div>
+          <h3 class="checkout-title">Контакты для заказа</h3>
+          <p class="checkout-note">
+            Укажите данные, чтобы флорист мог связаться с вами по заказу.
+          </p>
+        </div>
+        <button
+          class="checkout-close"
+          type="button"
+          onclick="closeCheckoutContact()"
+          aria-label="Закрыть"
+        >
+          ×
+        </button>
+      </div>
+      <form class="checkout-form" id="checkoutForm" novalidate>
+        <div class="checkout-field">
+          <label for="checkoutName">Имя</label>
+          <input
+            id="checkoutName"
+            name="name"
+            type="text"
+            autocomplete="name"
+            minlength="2"
+            required
+          />
+        </div>
+        <div class="checkout-field">
+          <label for="checkoutPhone">Телефон</label>
+          <input
+            id="checkoutPhone"
+            name="phone"
+            type="tel"
+            autocomplete="tel"
+            inputmode="tel"
+            placeholder="+7"
+            required
+          />
+        </div>
+        <div class="checkout-field">
+          <label for="checkoutEmail">Email необязательно</label>
+          <input
+            id="checkoutEmail"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="mail@example.com"
+          />
+        </div>
+        <div class="checkout-field">
+          <label for="checkoutComment">Комментарий необязательно</label>
+          <textarea
+            id="checkoutComment"
+            name="comment"
+            placeholder="Например: позвонить перед доставкой"
+          ></textarea>
+        </div>
+        <div class="checkout-error" id="checkoutError">
+          Заполните имя и телефон перед оплатой.
+        </div>
+        <button class="main-cta" type="submit">Перейти к оплате</button>
+      </form>
+    </section>
+
+    <section class="sheet" id="sheet">
+      <div class="sheet-handle"></div>
+      <div class="sheet-scroll" id="sheetScroll">
+        <div class="sheet-media" id="sheetMedia">
+          <div class="sheet-track" id="sheetTrack"></div>
+          <button
+            class="sheet-carousel-btn prev"
+            id="sheetPrevBtn"
+            type="button"
+            onclick="slideSheet(-1)"
+            aria-label="Предыдущий слайд"
+          >
+            ‹
+          </button>
+          <button
+            class="sheet-carousel-btn next"
+            id="sheetNextBtn"
+            type="button"
+            onclick="slideSheet(1)"
+            aria-label="Следующий слайд"
+          >
+            ›
+          </button>
+          <div class="sheet-top-controls">
+            <button
+              class="sheet-round-btn"
+              type="button"
+              onclick="closeSheet()"
+            >
+              ←
+            </button>
+            <button
+              class="sheet-round-btn"
+              type="button"
+              id="sheetFavBtn"
+              onclick="toggleCurrentFavorite()"
+            >
+              ♡
+            </button>
+          </div>
+          <div class="sheet-dots" id="sheetDots"></div>
+        </div>
+        <div class="sheet-info">
+          <h3 class="sheet-name" id="sheetName"></h3>
+          <div class="sheet-price" id="sheetPrice"></div>
+          <p class="sheet-desc" id="sheetDesc"></p>
+
+          <div class="meta-grid">
+            <div class="meta-item">
+              <div class="meta-label">Состав</div>
+              <div class="meta-value compose-list" id="sheetComposeShort">
+                Уточняется
+              </div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Размер</div>
+              <div class="meta-value" id="sheetSize">Средний</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Стойкость</div>
+              <div class="meta-value" id="sheetDurability">До 5 дней</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-actions" id="sheetActions">
+        <div class="qty-row">
+          <div class="qty" id="qtyWrap">
+            <button type="button" onclick="changeQty(-1)">−</button>
+            <span id="qtyValue">1</span>
+            <button type="button" onclick="changeQty(1)">+</button>
+          </div>
+          <button
+            class="main-cta-outline"
+            id="ctaBtn"
+            type="button"
+            onclick="handleAction()"
+          >
+            Добавить в корзину
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div
+      class="builder-overlay"
+      id="builderOverlay"
+      onclick="closeBuilder()"
+    ></div>
+    <section class="bsheet" id="builderSheet">
+      <div class="bsheet-header">
+        <button class="bsheet-back" type="button" onclick="closeBuilder()">
+          ←
+        </button>
+        <h3 class="bsheet-title">Собрать букет</h3>
+      </div>
+      <div class="bsheet-scroll" id="bsheetScroll">
+        <div
+          class="bsheet-section"
+          id="builderMatchSection"
+          style="display: none"
+        >
+          <div class="bsheet-label">Букеты из ваших цветов</div>
+          <div class="bsheet-bouquets" id="builderMatchBouquets"></div>
+        </div>
+        <div class="bsheet-label">Выберите цветы</div>
+        <div class="bsheet-flowers" id="builderFlowers"></div>
+      </div>
+      <div class="bsheet-foot">
+        <button
+          class="main-cta"
+          id="builderCta"
+          type="button"
+          onclick="submitBuilder()"
+          style="width: 100%"
+        >
+          Отправить заявку
+        </button>
+      </div>
+    </section>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

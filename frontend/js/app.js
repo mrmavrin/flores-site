@@ -1,5 +1,5 @@
-import { initTelegramApp } from './tg-utils.js';
-import { getCatalog } from './api.js';
+import { initTelegramApp, showPopup } from './tg-utils.js';
+import { getCatalog, createOrder } from './api.js';
 import {
     renderCatalog,
     renderCart,
@@ -8,7 +8,11 @@ import {
     closeBouquetModalUI,
     updateModalQtyUI,
     renderSlidesUI,
-    updateSlidePositionUI
+    updateSlidePositionUI,
+    openCheckoutModalUI,
+    closeCheckoutModalUI,
+    showCheckoutErrorUI,
+    setCheckoutLoadingUI
 } from './ui.js';
 
 const state = {
@@ -19,7 +23,8 @@ const state = {
     currentBouquetId: null,
     currentQty: 1,
     currentSlides: [],
-    currentSlideIndex: 0
+    currentSlideIndex: 0,
+    lastOrderId: null
 };
 
 const catalogContainer = document.getElementById('catalog');
@@ -28,6 +33,9 @@ const overlay = document.getElementById('overlay');
 const bottomNav = document.getElementById('bottomNav');
 const serviceCard = document.getElementById('serviceCard');
 const buyBtn = document.getElementById('buyBtn');
+const checkoutOverlay = document.getElementById('checkoutOverlay');
+const checkoutClose = document.querySelector('.checkout-close');
+const checkoutForm = document.getElementById('checkoutForm');
 
 async function initApp() {
     initTelegramApp();
@@ -90,6 +98,11 @@ function updateUI() {
 
     if (serviceCard) {
         serviceCard.classList.toggle('hidden', state.currentView !== 'home');
+    }
+
+    if (state.currentView === 'delivery') {
+        renderDeliveryView();
+        return;
     }
 
     if (state.currentView === 'cart') {
@@ -170,6 +183,11 @@ function setupEventListeners() {
 
         setView(navBtn.dataset.nav);
     });
+
+    buyBtn?.addEventListener('click', openCheckout);
+    checkoutOverlay?.addEventListener('click', closeCheckout);
+    checkoutClose?.addEventListener('click', closeCheckout);
+    checkoutForm?.addEventListener('submit', handleCheckoutSubmit);
 }
 
 function toggleFavorite(id) {
@@ -283,15 +301,19 @@ function setView(view) {
     state.currentView = view;
 
     if (view === 'delivery') {
-        catalogContainer.innerHTML =
-            '<div class="delivery-card"><div class="delivery-title">Доставка</div><p>Оформление доставки подключим следующим шагом.</p></div>';
-        syncNav();
-        syncHeaderActions(getCartSummary());
-        serviceCard?.classList.add('hidden');
+        updateUI();
         return;
     }
 
     updateUI();
+}
+
+function renderDeliveryView() {
+    const orderLine = state.lastOrderId
+        ? `<p>Заказ #${escapeAttribute(state.lastOrderId)} создан. Флорист скоро возьмет его в работу.</p>`
+        : '<p>Здесь будет статус доставки и согласование фото букета.</p>';
+
+    catalogContainer.innerHTML = `<div class="delivery-card"><div class="delivery-title">Доставка</div>${orderLine}</div>`;
 }
 
 function getCartSummary() {
@@ -338,6 +360,80 @@ function syncHeaderActions(cartSummary) {
 
     const canPay = state.currentView === 'cart' && cartSummary.count > 0;
     buyBtn.classList.toggle('hidden', !canPay);
+}
+
+function openCheckout() {
+    if (getCartSummary().count === 0) return;
+
+    openCheckoutModalUI();
+}
+
+function closeCheckout() {
+    closeCheckoutModalUI();
+}
+
+async function handleCheckoutSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const name = form.checkoutName?.value.trim();
+    const phone = form.checkoutPhone?.value.trim();
+    const address = form.checkoutAddress?.value.trim();
+    const comment = form.checkoutComment?.value.trim();
+
+    if (!name || !phone || !address) {
+        showCheckoutErrorUI('Пожалуйста, заполните имя, телефон и адрес доставки.');
+        return;
+    }
+
+    if (!isValidPhone(phone)) {
+        showCheckoutErrorUI('Пожалуйста, укажите корректный номер телефона.');
+        return;
+    }
+
+    const cartItems = Array.from(state.cart.entries());
+    if (!cartItems.length) return;
+
+    const [productId] = cartItems[0];
+
+    const payload = {
+        product_id: productId,
+        recipient_name: name,
+        recipient_phone: phone,
+        delivery_address: address,
+        delivery_comment: comment || null
+    };
+
+    try {
+        setCheckoutLoadingUI(true);
+        const response = await createOrder(payload);
+
+        if (response?.success) {
+            state.lastOrderId = response.order_id;
+            state.cart.clear();
+            form.reset();
+            closeCheckout();
+            setView('delivery');
+
+            showPopup({
+                title: 'Заказ оформлен!',
+                message: `Ваш заказ #${response.order_id} успешно создан.`,
+                buttons: [{ type: 'ok', text: 'Отлично' }]
+            });
+        }
+    } catch (error) {
+        showCheckoutErrorUI(
+            error.message || 'Произошла ошибка при создании заказа. Попробуйте снова.'
+        );
+    } finally {
+        setCheckoutLoadingUI(false);
+        updateUI();
+    }
+}
+
+function isValidPhone(phone) {
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 10;
 }
 
 function syncModalFavoriteButton() {

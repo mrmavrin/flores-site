@@ -157,6 +157,42 @@ export function updateSlidePositionUI(index) {
     });
 }
 
+export function openCheckoutModalUI() {
+    document.getElementById('checkoutError')?.classList.remove('open');
+    document.getElementById('checkoutOverlay')?.classList.add('open');
+    document.getElementById('checkoutModal')?.classList.add('open');
+    document.body.classList.add('modal-lock');
+}
+
+export function closeCheckoutModalUI() {
+    document.getElementById('checkoutOverlay')?.classList.remove('open');
+    document.getElementById('checkoutModal')?.classList.remove('open');
+    document.body.classList.remove('modal-lock');
+}
+
+export function showCheckoutErrorUI(message) {
+    const errorEl = document.getElementById('checkoutError');
+    if (!errorEl) return;
+
+    errorEl.textContent = message;
+    errorEl.classList.add('open');
+}
+
+export function setCheckoutLoadingUI(isLoading) {
+    const button = document.querySelector('#checkoutForm .main-cta');
+    if (!button) return;
+
+    if (isLoading) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = 'Оформляем...';
+        button.disabled = true;
+        return;
+    }
+
+    button.textContent = button.dataset.originalText || 'Перейти к оплате';
+    button.disabled = false;
+}
+
 function slideTemplate(slide) {
     if (slide.type === 'video') {
         return `<div class="slide"><video src="${escapeHtml(slide.url)}" autoplay muted loop playsinline webkit-playsinline></video></div>`;

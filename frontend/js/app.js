@@ -39,6 +39,9 @@ const buyBtn = document.getElementById('buyBtn');
 const checkoutOverlay = document.getElementById('checkoutOverlay');
 const checkoutClose = document.querySelector('.checkout-close');
 const checkoutForm = document.getElementById('checkoutForm');
+const enterBtn = document.getElementById('enterBtn');
+const welcomeScreen = document.getElementById('welcomeScreen');
+const mainScreen = document.getElementById('mainScreen');
 
 async function initApp() {
     initTelegramApp();
@@ -196,6 +199,7 @@ function setupEventListeners() {
     checkoutOverlay?.addEventListener('click', closeCheckout);
     checkoutClose?.addEventListener('click', closeCheckout);
     checkoutForm?.addEventListener('submit', handleCheckoutSubmit);
+    enterBtn?.addEventListener('click', enterApp);
 }
 
 function toggleFavorite(id) {
@@ -454,6 +458,16 @@ function syncHeaderActions(cartSummary) {
 
     const canPay = state.currentView === 'cart' && cartSummary.count > 0;
     buyBtn.classList.toggle('hidden', !canPay);
+}
+
+function enterApp() {
+    welcomeScreen?.classList.add('hidden');
+    mainScreen?.classList.remove('hidden');
+    bottomNav?.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+        mainScreen?.classList.add('open');
+    });
 }
 
 function openCheckout() {

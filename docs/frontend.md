@@ -50,6 +50,37 @@
 - не рисует UI;
 - не принимает решений по ролям.
 
+Сейчас включен mock-режим:
+
+```javascript
+const USE_MOCK = true;
+```
+
+Он позволяет тестировать клиентский путь без Beget, MariaDB и BotFather:
+
+- `getCatalog()` возвращает тестовые букеты;
+- `createOrder()` создает заказ в памяти;
+- `getMyOrders()` возвращает активный mock-заказ;
+- `updateOrderStatus()` меняет статус mock-заказа;
+- `window.mockAPI` имитирует действия флориста и курьера.
+
+Команды для консоли браузера:
+
+```javascript
+window.mockAPI.simulateAssembling()
+window.mockAPI.simulatePhotoReview()
+window.mockAPI.simulateDelivering()
+window.mockAPI.simulateDelivered()
+window.mockAPI.clearOrder()
+window.mockAPI.getState()
+```
+
+Для подключения реального backend нужно переключить:
+
+```javascript
+const USE_MOCK = false;
+```
+
 ## ui.js
 
 Только DOM-отрисовка.
@@ -159,6 +190,7 @@ Map<productId, quantity>
 
 - `api.js` содержит `getMyOrders()`;
 - `api.js` отправляет `note` в `updateOrderStatus(orderId, newStatus, note)`;
+- mock-режим позволяет перевести заказ в `PHOTO_REVIEW` через `window.mockAPI.simulatePhotoReview()`;
 - `ui.js` содержит `renderDeliveryTrackerUI(order, container)`;
 - `app.js` хранит `state.activeOrder`;
 - при переходе на вкладку `delivery` вызывается `loadActiveOrder()`;

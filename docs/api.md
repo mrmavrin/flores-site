@@ -147,3 +147,31 @@ ORDER BY id DESC
 - `updateOrderStatus(orderId, newStatus, note)`
 
 Все запросы идут через универсальный `request()`, который добавляет `Authorization: initData`.
+
+## Mock Mode
+
+На этапе локальной разработки `frontend/js/api.js` может работать без backend:
+
+```javascript
+const USE_MOCK = true;
+```
+
+Mock-режим имитирует:
+
+- `GET /users/role`;
+- `GET /catalog`;
+- `POST /orders`;
+- `GET /orders/my`;
+- `PATCH /orders/:id/status`.
+
+Для имитации действий флориста в браузерной консоли доступен:
+
+```javascript
+window.mockAPI.simulatePhotoReview()
+```
+
+Перед подключением реального сервера нужно установить:
+
+```javascript
+const USE_MOCK = false;
+```

@@ -188,3 +188,20 @@ backend/.env.example
 ```
 
 Реальный `backend/.env` игнорируется через `backend/.gitignore`.
+
+## Local DB Tunnel
+
+Для локальной разработки с реальной базой Beget используем SSH-туннель:
+
+```bash
+ssh -L 3306:localhost:3306 user@server.beget.com
+```
+
+Пока туннель открыт, локальный backend подключается к базе так:
+
+```text
+DB_HOST=127.0.0.1
+DB_PORT=3306
+```
+
+На самом сервере Beget `DB_HOST` тоже обычно будет `localhost` или значение из панели Beget.

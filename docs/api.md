@@ -143,6 +143,7 @@ ORDER BY id DESC
 - `getUserRole()`
 - `getCatalog()`
 - `createOrder(orderData)`
-- `updateOrderStatus(orderId, newStatus)`
+- `getMyOrders()`
+- `updateOrderStatus(orderId, newStatus, note)`
 
 Все запросы идут через универсальный `request()`, который добавляет `Authorization: initData`.

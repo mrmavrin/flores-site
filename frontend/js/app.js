@@ -1,8 +1,9 @@
 import { initTelegramApp, showPopup } from './tg-utils.js';
-import { getCatalog, createOrder } from './api.js';
+import { getCatalog, createOrder, getMyOrders, updateOrderStatus } from './api.js';
 import {
     renderCatalog,
     renderCart,
+    renderDeliveryTrackerUI,
     updateCountersUI,
     openBouquetModalUI,
     closeBouquetModalUI,
@@ -24,7 +25,9 @@ const state = {
     currentQty: 1,
     currentSlides: [],
     currentSlideIndex: 0,
-    lastOrderId: null
+    lastOrderId: null,
+    activeOrder: null,
+    isDeliveryLoading: false
 };
 
 const catalogContainer = document.getElementById('catalog');
@@ -121,6 +124,11 @@ function updateUI() {
 
 function setupEventListeners() {
     catalogContainer?.addEventListener('click', (event) => {
+        if (state.currentView === 'delivery') {
+            handleDeliveryClick(event);
+            return;
+        }
+
         if (state.currentView === 'cart') {
             handleCartClick(event);
             return;
@@ -273,6 +281,20 @@ function handleCartClick(event) {
     }
 }
 
+function handleDeliveryClick(event) {
+    const actionBtn = event.target.closest('[data-delivery-action]');
+    if (!actionBtn) return;
+
+    const action = actionBtn.dataset.deliveryAction;
+    const orderId = actionBtn.dataset.orderId;
+
+    if (action === 'approve') {
+        approveBouquet(orderId);
+    } else if (action === 'reject') {
+        rejectBouquet(orderId);
+    }
+}
+
 function changeCartQty(id, delta) {
     if (!id) return;
 
@@ -302,6 +324,7 @@ function setView(view) {
 
     if (view === 'delivery') {
         updateUI();
+        loadActiveOrder();
         return;
     }
 
@@ -309,11 +332,82 @@ function setView(view) {
 }
 
 function renderDeliveryView() {
-    const orderLine = state.lastOrderId
-        ? `<p>Заказ #${escapeAttribute(state.lastOrderId)} создан. Флорист скоро возьмет его в работу.</p>`
-        : '<p>Здесь будет статус доставки и согласование фото букета.</p>';
+    if (state.isDeliveryLoading) {
+        catalogContainer.innerHTML =
+            '<div class="loading"><div class="spin">🌸</div><div style="margin-top: 8px">Загружаем статус...</div></div>';
+        return;
+    }
 
-    catalogContainer.innerHTML = `<div class="delivery-card"><div class="delivery-title">Доставка</div>${orderLine}</div>`;
+    renderDeliveryTrackerUI(state.activeOrder, catalogContainer);
+}
+
+async function loadActiveOrder() {
+    state.isDeliveryLoading = true;
+    renderDeliveryView();
+
+    try {
+        const orders = await getMyOrders();
+        state.activeOrder =
+            orders.find((order) => order.status !== 'DELIVERED') || orders[0] || null;
+    } catch (error) {
+        console.error('Ошибка загрузки заказа:', error);
+        state.activeOrder = null;
+        catalogContainer.innerHTML =
+            '<div class="empty">Не удалось загрузить данные о заказе.</div>';
+        return;
+    } finally {
+        state.isDeliveryLoading = false;
+    }
+
+    if (state.currentView === 'delivery') {
+        renderDeliveryView();
+    }
+}
+
+async function approveBouquet(orderId) {
+    const button = document.querySelector('[data-delivery-action="approve"]');
+
+    try {
+        if (button) button.disabled = true;
+        await updateOrderStatus(orderId, 'READY');
+        await loadActiveOrder();
+    } catch (error) {
+        showPopup({
+            title: 'Не удалось подтвердить',
+            message: error.message || 'Попробуйте еще раз.',
+            buttons: [{ type: 'ok', text: 'Понятно' }]
+        });
+        if (button) button.disabled = false;
+    }
+}
+
+async function rejectBouquet(orderId) {
+    const noteInput = document.getElementById('revisionNote');
+    const note = noteInput ? noteInput.value.trim() : '';
+
+    if (!note) {
+        showPopup({
+            title: 'Нужен комментарий',
+            message: 'Напишите, что именно нужно исправить.',
+            buttons: [{ type: 'ok', text: 'Понятно' }]
+        });
+        return;
+    }
+
+    const button = document.querySelector('[data-delivery-action="reject"]');
+
+    try {
+        if (button) button.disabled = true;
+        await updateOrderStatus(orderId, 'REVISION', note);
+        await loadActiveOrder();
+    } catch (error) {
+        showPopup({
+            title: 'Не удалось отправить правки',
+            message: error.message || 'Попробуйте еще раз.',
+            buttons: [{ type: 'ok', text: 'Понятно' }]
+        });
+        if (button) button.disabled = false;
+    }
 }
 
 function getCartSummary() {
@@ -410,6 +504,11 @@ async function handleCheckoutSubmit(event) {
 
         if (response?.success) {
             state.lastOrderId = response.order_id;
+            state.activeOrder = {
+                id: response.order_id,
+                status: 'NEW',
+                delivery_address: payload.delivery_address
+            };
             state.cart.clear();
             form.reset();
             closeCheckout();

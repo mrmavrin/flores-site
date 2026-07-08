@@ -155,6 +155,16 @@ Map<productId, quantity>
 - кнопка "Принимаю";
 - кнопка "Исправить".
 
+Текущая реализация клиентского трекера:
+
+- `api.js` содержит `getMyOrders()`;
+- `api.js` отправляет `note` в `updateOrderStatus(orderId, newStatus, note)`;
+- `ui.js` содержит `renderDeliveryTrackerUI(order, container)`;
+- `app.js` хранит `state.activeOrder`;
+- при переходе на вкладку `delivery` вызывается `loadActiveOrder()`;
+- `PHOTO_REVIEW -> READY` обрабатывает `approveBouquet()`;
+- `PHOTO_REVIEW -> REVISION` обрабатывает `rejectBouquet()`.
+
 Флористский интерфейс позже получит:
 
 ```html

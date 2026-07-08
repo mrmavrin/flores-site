@@ -33,6 +33,45 @@ export function renderCart(container, items, totalFormatted) {
     `;
 }
 
+export function renderDeliveryTrackerUI(order, container) {
+    if (!container) return;
+
+    if (!order) {
+        container.innerHTML = `
+            <div class="delivery-card">
+                <h3 class="delivery-title">Доставка</h3>
+                <div class="delivery-pill">Нет активных заказов</div>
+                <p style="margin-top:12px">После оформления заказа здесь появится трекер доставки.</p>
+            </div>`;
+        return;
+    }
+
+    const statusMap = {
+        NEW: 'Заказ принят',
+        ASSEMBLING: 'Флорист собирает ваш букет',
+        PHOTO_REVIEW: 'Ожидает вашего подтверждения',
+        REVISION: 'Флорист вносит изменения',
+        READY: 'Букет готов и ожидает курьера',
+        DELIVERING: 'Курьер в пути',
+        DELIVERED: 'Заказ доставлен'
+    };
+    const statusText = statusMap[order.status] || order.status;
+    const photoReviewHtml = deliveryPhotoTemplate(order);
+
+    container.innerHTML = `
+        <div class="delivery-card">
+            <h3 class="delivery-title">Доставка</h3>
+            <div class="delivery-pill">Заказ #${escapeHtml(order.id)}</div>
+            <div class="delivery-status" style="margin-top: 12px; padding: 12px; background: #eef5eb; border-radius: 12px; color: #53644c;">
+                <strong>Статус:</strong> ${escapeHtml(statusText)}
+            </div>
+            <div class="delivery-address" style="margin-top: 12px;">
+                <strong>Адрес доставки:</strong><br>${escapeHtml(order.delivery_address || 'Не указан')}
+            </div>
+            ${photoReviewHtml}
+        </div>`;
+}
+
 function cardTemplate(item, isFav) {
     const isHidden = item._status === 'hidden' ? 'is-hidden' : '';
     const favClass = isFav ? 'active' : '';
@@ -56,6 +95,31 @@ function cardTemplate(item, isFav) {
             <div class="card-price">${priceFormatted}</div>
         </div>
     </article>`;
+}
+
+function deliveryPhotoTemplate(order) {
+    if (order.status === 'PHOTO_REVIEW' && order.photo_url) {
+        return `
+            <div class="photo-review-block" style="margin-top: 16px;">
+                <img src="${escapeHtml(order.photo_url)}" alt="Фото букета" style="width: 100%; border-radius: 12px; margin-bottom: 12px; display: block;">
+                <div class="checkout-field" style="margin-bottom: 12px;">
+                    <textarea id="revisionNote" placeholder="Что исправить? Укажите, если есть замечания." style="width: 100%;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="main-cta" type="button" data-delivery-action="approve" data-order-id="${escapeHtml(order.id)}">Принимаю</button>
+                    <button class="main-cta-outline" type="button" data-delivery-action="reject" data-order-id="${escapeHtml(order.id)}">Исправить</button>
+                </div>
+            </div>`;
+    }
+
+    if (order.photo_url) {
+        return `
+            <div style="margin-top: 16px;">
+                <img src="${escapeHtml(order.photo_url)}" alt="Фото букета" style="width: 100%; border-radius: 12px; opacity: 0.85; display: block;">
+            </div>`;
+    }
+
+    return '';
 }
 
 function cartLineTemplate(item) {

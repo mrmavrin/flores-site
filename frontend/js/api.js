@@ -42,9 +42,13 @@ export async function createOrder(orderData) {
     });
 }
 
-export async function updateOrderStatus(orderId, newStatus) {
+export async function getMyOrders() {
+    return request('/orders/my', { method: 'GET' });
+}
+
+export async function updateOrderStatus(orderId, newStatus, note = '') {
     return request(`/orders/${orderId}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ new_status: newStatus })
+        body: JSON.stringify({ new_status: newStatus, note })
     });
 }

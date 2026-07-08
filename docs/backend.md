@@ -10,7 +10,7 @@ Backend - Node.js сервер на Beget.
 - `cors`;
 - `dotenv`;
 - `mysql2`;
-- `multer`;
+- `multer` 2.x;
 - `node-telegram-bot-api`.
 
 ## config.js
@@ -142,7 +142,8 @@ const orderCtrl = require('../controllers/order.ctrl');
 router.get('/users/role', authTelegram, userCtrl.getUserRole);
 router.get('/catalog', authTelegram, catalogCtrl.getCatalog);
 router.post('/orders', authTelegram, orderCtrl.createOrder);
-router.post('/orders/:id/photo', authTelegram, orderCtrl.uploadOrderPhoto);
+router.get('/orders/my', authTelegram, orderCtrl.getMyOrders);
+router.post('/orders/:id/photo', authTelegram, orderCtrl.uploadMiddleware, orderCtrl.uploadOrderPhoto);
 router.patch('/orders/:id/status', authTelegram, orderCtrl.updateOrderStatus);
 
 module.exports = router;
@@ -163,3 +164,19 @@ backend/uploads/orders/
 - размер до 5 MB;
 - имя файла генерирует сервер;
 - Express раздает `/uploads`.
+
+## Local Env
+
+Для локального запуска нужен `backend/.env`:
+
+```text
+BOT_TOKEN=
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+DB_NAME=
+PORT=3000
+PUBLIC_BASE_URL=
+```
+
+`PUBLIC_BASE_URL` нужен для стабильных публичных ссылок на фото после деплоя. Локально можно оставить пустым.
